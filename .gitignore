@@ -1,0 +1,15 @@
+# --- Generated ANRLT files ---
+/gen/
+
+# --- IntelliJ IDEA ---
+.idea/
+*.iml
+
+# --- Java and compiled files ---
+*.class
+/target/
+/build/
+
+# --- System files ---
+.DS_Store
+Thumbs.db
