@@ -3,6 +3,15 @@ grammar BagOfGrammar;
 // ============================================================
 // ANTLR & DRAGONS - Grammar
 // A typed imperative DSL for RPG scenario simulation
+//
+// Advanced features implemented:
+//  - Zucchero sintattico
+//  - Non determinismo
+//  - Strutture dati (Array) (Might be removed in the future)
+//  - Classi e Oggetti
+//  - Funzioni
+//  - Flusso di controllo condizionato
+//  - Conversione di tipo
 // ============================================================
 
 // TOP-LEVEL PROGRAM STRUCTURE
@@ -60,6 +69,7 @@ stat : varDecl ';'              # StatVarDecl
      | untilStat                # StatWhile
      | forStat                  # StatFor
      | switchStat               # StatSwitch    // Advanced feature: Flusso condizionato
+     | nonDetStat               # StatNonDet    // Advanced feature: Non determinismo
      | NARRATE expr ';'         # StatPrint
      | RETURN expr ';'          # StatReturn
      | RETURN ';'               # StatReturnVoid
@@ -119,6 +129,13 @@ caseClause : CASE expr ':' stat* ;
 
 defaultClause : DEFAULT ':' stat* ;
 
+// Non deterministic choice (advanced feature: Non determinismo) to simulate dice roll
+nonDetStat : nonDetBranch ('@' nonDetBranch)+ ;
+
+nonDetBranch : assign ';'       # NonDetAssign
+             | spellCall ';'    # NonDetCall
+             ;
+
 // ----------------------------------------
 //  FUNCTION CALLS
 // ----------------------------------------
@@ -163,6 +180,7 @@ expr : expr '?' expr ':' expr                       # ExprTernary
      | FLOAT_LIT                                    # ExprFloat
      | BOOL_LIT                                     # ExprBool
      | STRING_LIT                                   # ExprString
+     | INT_LIT? DIE_LIT                             # ExprDie
      | INTERP_STRING                                # ExprInterpString
      | '(' expr ')'                                 # ExprParen
      ;
@@ -186,6 +204,7 @@ type : INT          # TypeInt
      | DAMAGE       # TypeDamage
      | LEVEL        # TypeLevel
      | QUESTNAME    # TypeQuestName
+     | DIE          # TypeDie
      | ANY          # TypeAny
      | ID           # TypeObject // class name as type
      | type '[' ']' # TypeArray
@@ -231,17 +250,19 @@ HP          : 'HP'          ;
 DAMAGE      : 'Damage'      ;
 LEVEL       : 'Level'       ;
 QUESTNAME   : 'QuestName'   ;
+DIE         : 'Die'         ;
 ANY         : 'Any'         ;
 
 // ----------------------------------------
 //  LITERALS
 // ----------------------------------------
 
-BOOL_LIT    : 'true' | 'false' ;
-INT_LIT     : [0-9]+  ;
-FLOAT_LIT   : [0-9]+ '.' [0-9]+ ;
-STRING_LIT  : '"' (~["\\\n] | '\\' .)* '"' ; // No interpolation
-INTERP_STRING : 'i"' (INTERP_CHAR | INTERP_EXPR)* '"' ;
+BOOL_LIT        : 'true' | 'false' ;
+INT_LIT         : [0-9]+  ;
+FLOAT_LIT       : [0-9]+ '.' [0-9]+ ;
+STRING_LIT      : '"' (~["\\\n] | '\\' .)* '"' ; // No interpolation
+DIE_LIT         : 'd'('4'|'6'|'8'|'10'|'%'|'12'|'20') ;
+INTERP_STRING   : 'i"' (INTERP_CHAR | INTERP_EXPR)* '"' ;
 
 // Framgents -> Pieces to use inside other tokens (improves readability)
 

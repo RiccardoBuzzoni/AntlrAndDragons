@@ -9,7 +9,8 @@ public enum SimpleType implements ExpType{
     HP("HP"),
     DAMAGE("Damage"),
     LEVEL("Level"),
-    QUESTNAME("QuestName");
+    QUESTNAME("QuestName"),
+    DIE("Die");
 
     private final String name;
 
@@ -28,13 +29,14 @@ public enum SimpleType implements ExpType{
             return true; // From any you can cast down to anything
         }
 
-        if(this == INT && (other == HP || other == DAMAGE || other == LEVEL)){
+        if((this == INT || this == HP || this == DAMAGE || this == LEVEL) &&
+                (other == INT || other == HP || other == DAMAGE || other == LEVEL)){
             return true;
         }
         if(this == FLOAT && other == INT){
             return true;
         }
-        if(this == STRING && other == QUESTNAME){
+        if(this == STRING && (other == QUESTNAME || other == DIE)){
             return true;
         }
         return false;
@@ -57,7 +59,7 @@ public enum SimpleType implements ExpType{
                 return o == INT;
             }
             if(this == STRING){
-                return o == QUESTNAME;
+                return o == QUESTNAME || o == DIE;
             }
         }
         return false;

@@ -16,6 +16,7 @@ public class TypeUtils {
             case "Damage"    -> SimpleType.DAMAGE;
             case "Level"     -> SimpleType.LEVEL;
             case "QuestName" -> SimpleType.QUESTNAME;
+            case "Die"       -> SimpleType.DIE;
             default          -> new ObjectType(str); // If not basic type -> Crature (Class)
         };
     }
@@ -38,7 +39,7 @@ public class TypeUtils {
         return null;
     }
 
-    // Type conversion
+    // Type conversion (explicit downcast)
     public static ExpValue<?> castValue(ExpValue<?> value, ExpType targetType){
         ExpType valueType = fromValue(value);
 
@@ -52,6 +53,18 @@ public class TypeUtils {
             return new IntValue((int) decValue.toJavaValue().doubleValue());
         }
 
-        return value;
+        if(valueType == SimpleType.INT &&
+                (targetType == SimpleType.INT || targetType == SimpleType.HP || targetType == SimpleType.DAMAGE ||
+                        targetType == SimpleType.LEVEL)){
+            return value; // no need to cast value to Java value
+        }
+
+        if (valueType == SimpleType.STRING &&
+                (targetType == SimpleType.STRING || targetType == SimpleType.QUESTNAME ||
+                        targetType == SimpleType.DIE)) {
+            return value;
+        }
+
+        return value; // default
     }
 }
