@@ -7,7 +7,6 @@ grammar BagOfGrammar;
 // Advanced features implemented:
 //  - Zucchero sintattico
 //  - Non determinismo
-//  - Strutture dati (Array) (Might be removed in the future)
 //  - Classi e Oggetti
 //  - Funzioni
 //  - Flusso di controllo condizionato
@@ -85,7 +84,6 @@ stat : varDecl ';'              # StatVarDecl
 // ----------------------------------------
 
 varDecl : type ID '=' expr                      # VarDeclInit
-        | type ID '=' SUMMON type '[' expr ']'  # VarDeclArray
         | type ID                               # VarDeclDefault
         ;
 
@@ -94,7 +92,6 @@ varDecl : type ID '=' expr                      # VarDeclInit
 // ----------------------------------------
 
 assign : ID '=' expr                # AssignSimple
-       | ID '[' expr ']' '=' expr   # AssignArray
        | ID '.' ID '=' expr         # AssignField
        | ID '+=' expr               # AssignAdd
        | ID '-=' expr               # AssignSub
@@ -166,7 +163,6 @@ expr : expr '?' expr ':' expr                       # ExprTernary
      | 'not' expr                                   # ExprNot
      | '-' expr                                     # ExprNeg
      | '(' type ')' expr                            # ExprCast
-     | expr '[' expr ']'                            # ExprArrayAccess
      | '++' ID                                      # ExprPreInc
      | '--' ID                                      # ExprPreDec
      | ID '++'                                      # ExprPostInc
@@ -191,7 +187,6 @@ expr : expr '?' expr ':' expr                       # ExprTernary
 //  Domain: HP Damage Level (subtypes of Int)
 //          QuestName (subtype of String)
 //  Object: ID (class name used as type)
-//  Array: T[]
 //  Any: root of the type hierarchy
 //  Void: for functions with no return value
 // ----------------------------------------
@@ -207,7 +202,6 @@ type : INT          # TypeInt
      | DIE          # TypeDie
      | ANY          # TypeAny
      | ID           # TypeObject // class name as type
-     | type '[' ']' # TypeArray
      ;
 
 // ----------------------------------------

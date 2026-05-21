@@ -35,7 +35,7 @@ public class TypeUtils {
         if(value instanceof StringValue){
             return SimpleType.STRING;
         }
-        // ArrayValue and ObjectValue are managed in value/ package
+        // ObjectValue is managed in value/ package
         return null;
     }
 
