@@ -33,9 +33,12 @@ public class TypeUtils {
             return SimpleType.BOOL;
         }
         if(value instanceof StringValue){
+            String s = ((StringValue) value).toJavaValue();
+            if (s.matches("\\d*d(\\d+|%)")) { // to allow roll to be called without Die variable declaration
+                return SimpleType.DIE;
+            }
             return SimpleType.STRING;
         }
-        // ObjectValue is managed in value/ package
         return null;
     }
 
@@ -59,9 +62,8 @@ public class TypeUtils {
             return value; // no need to cast value to Java value
         }
 
-        if (valueType == SimpleType.STRING &&
-                (targetType == SimpleType.STRING || targetType == SimpleType.QUESTNAME ||
-                        targetType == SimpleType.DIE)) {
+        if ((valueType == SimpleType.STRING || valueType == SimpleType.DIE || valueType == SimpleType.QUESTNAME) &&
+                (targetType == SimpleType.STRING || targetType == SimpleType.QUESTNAME || targetType == SimpleType.DIE)) {
             return value;
         }
 

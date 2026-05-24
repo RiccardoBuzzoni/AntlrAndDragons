@@ -480,7 +480,18 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
 
     @Override
     public Type visitExprDie(BagOfGrammarParser.ExprDieContext ctx) {
-        return SimpleType.INT; // die roll produces int result
+        return SimpleType.DIE;
+    }
+
+    @Override
+    public Type visitExprRoll(BagOfGrammarParser.ExprRollContext ctx) {
+        Type exprType = visit(ctx.expr());
+
+        if (exprType != SimpleType.DIE && exprType != SimpleType.STRING && !(exprType instanceof ErrType)) {
+            error(ctx, "Operator 'roll' requires a Die operand, got " + exprType);
+            return ErrType.INSTANCE;
+        }
+        return SimpleType.INT; // die roll returns Integer
     }
 
     @Override
@@ -549,8 +560,7 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
         Type right = visit(ctx.expr(1));
         String op  = ctx.op.getText();
         // String concatenation with '+'
-        if (op.equals("+") &&
-                left == SimpleType.STRING && right == SimpleType.STRING)
+        if (op.equals("+") && (left == SimpleType.STRING || right == SimpleType.STRING))
             return SimpleType.STRING;
         if (!isNumeric(left))
             error(ctx, "Operator '" + op + "' requires numeric left operand, got " + left);
@@ -672,7 +682,7 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
     @Override public Type visitTypeDamage(BagOfGrammarParser.TypeDamageContext ctx) { return SimpleType.DAMAGE; }
     @Override public Type visitTypeLevel(BagOfGrammarParser.TypeLevelContext ctx) { return SimpleType.LEVEL; }
     @Override public Type visitTypeQuestName(BagOfGrammarParser.TypeQuestNameContext ctx) { return SimpleType.QUESTNAME; }
-    @Override public Type visitTypeDie(BagOfGrammarParser.TypeDieContext ctx) { return SimpleType.INT; }
+    @Override public Type visitTypeDie(BagOfGrammarParser.TypeDieContext ctx) { return SimpleType.DIE; }
     @Override public Type visitTypeAny(BagOfGrammarParser.TypeAnyContext ctx) { return SimpleType.ANY; }
     @Override public Type visitTypeObject(BagOfGrammarParser.TypeObjectContext ctx) { return new ObjectType(ctx.ID().getText()); }
 

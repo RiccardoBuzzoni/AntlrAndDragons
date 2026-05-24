@@ -153,6 +153,7 @@ expr : expr '?' expr ':' expr                       # ExprTernary
      | expr op=('*' | '/' | '%') expr               # ExprMulDivMod
      | 'not' expr                                   # ExprNot
      | '-' expr                                     # ExprNeg
+     | ROLL expr                                    # ExprRoll
      | '(' type ')' expr                            # ExprCast
      | '++' ID                                      # ExprPreInc
      | '--' ID                                      # ExprPreDec
@@ -205,6 +206,7 @@ SPELLBOOK : 'spellbook' ; // function declaration section header
 SPELL : 'spell' ;
 CAST : 'cast' ; // function call keyword
 QUEST : 'quest' ; // main block header
+ROLL : 'roll' ;
 KNOWN : 'known' ;
 UNSEEN : 'unseen' ;
 SUMMON : 'summon' ;
