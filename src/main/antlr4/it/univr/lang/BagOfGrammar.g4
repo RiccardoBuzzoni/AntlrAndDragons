@@ -6,7 +6,6 @@ grammar BagOfGrammar;
 //
 // Advanced features implemented:
 //  - Zucchero sintattico
-//  - Non determinismo
 //  - Classi e Oggetti
 //  - Funzioni
 //  - Flusso di controllo condizionato
@@ -68,7 +67,6 @@ stat : varDecl ';'              # StatVarDecl
      | untilStat                # StatWhile
      | forStat                  # StatFor
      | switchStat               # StatSwitch    // Advanced feature: Flusso condizionato
-     | nonDetStat               # StatNonDet    // Advanced feature: Non determinismo
      | NARRATE expr ';'         # StatPrint
      | RETURN expr ';'          # StatReturn
      | RETURN ';'               # StatReturnVoid
@@ -125,13 +123,6 @@ switchStat : SWITCH '(' expr ')' '{' caseClause+ defaultClause? '}' ;
 caseClause : CASE expr ':' stat* ;
 
 defaultClause : DEFAULT ':' stat* ;
-
-// Non deterministic choice (advanced feature: Non determinismo) to simulate dice roll
-nonDetStat : nonDetBranch ('@' nonDetBranch)+ ;
-
-nonDetBranch : assign ';'       # NonDetAssign
-             | spellCall ';'    # NonDetCall
-             ;
 
 // ----------------------------------------
 //  FUNCTION CALLS

@@ -245,12 +245,6 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
     @Override public Type visitStatoBlock(BagOfGrammarParser.StatoBlockContext ctx) { visit(ctx.block()); return null; }
 
     @Override
-    public Type visitStatNonDet(BagOfGrammarParser.StatNonDetContext ctx) {
-        visit(ctx.nonDetStat());
-        return null;
-    }
-
-    @Override
     public Type visitStatPrint(BagOfGrammarParser.StatPrintContext ctx) {
         visit(ctx.expr()); // any type is printable
         return null;
@@ -441,26 +435,6 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
 
     @Override public Type visitCaseClause(BagOfGrammarParser.CaseClauseContext ctx) { return null; }
     @Override public Type visitDefaultClause(BagOfGrammarParser.DefaultClauseContext ctx) { return null; }
-
-    // Advanced feature: Non determinismo
-    @Override
-    public Type visitNonDetStat(BagOfGrammarParser.NonDetStatContext ctx) {
-        for (BagOfGrammarParser.NonDetBranchContext b : ctx.nonDetBranch())
-            visit(b);
-        return null;
-    }
-
-    @Override
-    public Type visitNonDetAssign(BagOfGrammarParser.NonDetAssignContext ctx) {
-        visit(ctx.assign());
-        return null;
-    }
-
-    @Override
-    public Type visitNonDetCall(BagOfGrammarParser.NonDetCallContext ctx) {
-        visit(ctx.spellCall());
-        return null;
-    }
 
     // Functions (advanced feature: Funzioni) and method calls (advanced feature: Classi e oggetti)
 
