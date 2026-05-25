@@ -242,7 +242,7 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
     @Override public Type visitStatWhile(BagOfGrammarParser.StatWhileContext ctx) { visit(ctx.untilStat()); return null; }
     @Override public Type visitStatFor(BagOfGrammarParser.StatForContext ctx) { visit(ctx.forStat()); return null; }
     @Override public Type visitStatSwitch(BagOfGrammarParser.StatSwitchContext ctx) { visit(ctx.switchStat()); return null; }
-    @Override public Type visitStatoBlock(BagOfGrammarParser.StatoBlockContext ctx) { visit(ctx.block()); return null; }
+    @Override public Type visitStatBlock(BagOfGrammarParser.StatBlockContext ctx) { visit(ctx.block()); return null; }
 
     @Override
     public Type visitStatPrint(BagOfGrammarParser.StatPrintContext ctx) {

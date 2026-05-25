@@ -69,6 +69,10 @@ public class Mem {
         scopes.peek().declareInit(id, type, value);
     }
 
+    public static Mem copyOf(Mem other) {
+        return new Mem(other);
+    }
+
     // Lookup
 
     /**

@@ -74,7 +74,7 @@ stat : varDecl ';'              # StatVarDecl
      | FLEE ';'                 # StatExit
      | spellCall ';'            # StatFuncCall
      | expr '.' spellCall ';'   # StatMethodCall
-     | block                    # StatoBlock
+     | block                    # StatBlock
      ;
 
 // ----------------------------------------
