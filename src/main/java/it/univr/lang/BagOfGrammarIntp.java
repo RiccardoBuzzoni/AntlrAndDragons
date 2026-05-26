@@ -263,7 +263,7 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
 
     @Override
     public ExpValue<?> visitUntilStat(BagOfGrammarParser.UntilStatContext ctx) {
-        if (!visitBoolExpr(ctx.expr()).toJavaValue())
+        if (visitBoolExpr(ctx.expr()).toJavaValue()) // until exits when condition is true
             return null;
 
         BagOfGrammarIntp branch = newBranch();

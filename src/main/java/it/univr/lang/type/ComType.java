@@ -10,5 +10,9 @@ public class ComType implements Type {
     }
 
     @Override
-    public String toString() { return "void_command"; }
+    public String getName() { return "Com"; }
+
+    @Override
+    public String toString() { return "Com"; }
+
 }

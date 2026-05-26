@@ -10,7 +10,9 @@ public class ErrType implements Type{
     }
 
     @Override
-    public String toString(){
-        return "error_type";
-    }
+    public String getName() { return "Err"; }
+
+    @Override
+    public String toString() { return "Err"; }
+
 }
