@@ -1,0 +1,142 @@
+
+#COME SCEGLIERE IL PROGRAMMA DA PROVARE 
+
+in alto a sx, Main -> edit configurations -> in ''program arguments'' scrivi percorso -> programs/prova.bag
+_______________________________________________________________________
+
+#Errori incontrati 
+1)
+
+goblin.hp -= (HP)WarriorATK;
+
+line 78:14 no viable alternative at input 'goblin.hp-='
+Syntax error(s) found. Execution aborted.
+
+Fixato con:
+goblin.hp = goblin.hp - (HP)WarriorATK;
+
+_______________________________________________________________________
+
+2)
+until ( (guerriero.hp lte 0) or (goblin.hp lte 0)) {...}
+
+ [TypeCheck] line 53:28 – 'or' requires Bool left operand, got Int 
+ [TypeCheck] line 53:28 – 'or' requires Bool right operand, got Creature Goblin 
+ [TypeCheck] line 53:11 – Relational operator 'lte' requires numeric operands, got HP and Bool 
+ [TypeCheck] line 53:11 – Field access on non-object type: Bool Type error(s) found. 
+ Execution aborted.
+
+Spiegazione(chatgpt):
+
+Qui non è più un problema di sintassi: è il TypeChecker che sta interpretando male i tipi dentro
+la tua espressione (e probabilmente anche la precedenza/visite dell’AST).
+
+viene interpretata così (SBAGLIATO)
+guerriero.hp → Bool (!!)
+0 → Int
+or → riceve roba non-boolean → errore
+lte → applicato a roba già corrotta
+
+Hai questo errore:
+Field access on non-object type: Bool
+
+👉 significa una cosa precisa:
+
+🚨 il TypeChecker STA SBAGLIANDO l’ordine di valutazione. 
+(guerriero.hp lte 0) → OK
+ma poi:
+questo risultato viene visto come Bool o Creature (rotto)
+
+Fixato con:
+(guerriero.hp lte 0) or (goblin.hp lte 0)
+cioè [Bool] OR [Bool]
+
+Funziona perchè il parser ha: expr : expr op=('or'|'and') expr
+quindi senza parentesi il TypeChecker può confondere i livelli.
+Le parentesi forzano:
+prima confronto numerico
+poi boolean OR
+
+_______________________________________________________________________
+
+Ho scritto 
+int count = 1;
+nel programma 
+
+errore:
+[TypeCheck] line 53:4 – Cannot assign Int to variable of type Creature int
+Type error(s) found. Execution aborted.
+
+speigazione:
+Nel tuo linguaggio hai due mondi di tipi che si stanno mescolando male:
+
+tipi primitivi: Int, Float, Bool
+tipi “RPG”: HP, Damage, Level
+
+e il TypeSystem probabilmente sta:
+
+o confondendo Int con HP/Damage
+o non sta distinguendo bene SimpleType.INT
+Ma il TypeChecker sta probabilmente:
+
+risolvendo Int → tipo “specializzato”
+oppure leggendo 0 come tipo “creature int” (errore a cascata)
+
+fix:
+Int count =0; CON LA I MAIUSCOLA
+
+_______________________________________________________________________
+
+'\n' non funziona nelle stringhe narrate i"...${}"; <- cioè quelle con i
+
+_______________________________________________________________________
+
+        if (result lte 3) {
+            Damage WarriorATK = guerriero.cast swordSlash();
+        }
+        else if (result lte 5) {  <---linea 68
+            Damage WarriorATK = guerriero.cast heavyStrike();
+        }
+        else {
+            Damage WarriorATK = guerriero.cast criticalStrike();
+        }
+
+line 68:13 missing '{' at 'if'
+line 98:1 extraneous input '<EOF>' expecting {'{', '}', '(', '++', '--', '-', 'not', 'cast', 'roll', 'summon', 'narrate', 'return', 'flee', 'if', 'until', 'for', 'switch', 'break', 'Int', 'Float', 'Bool', 'String', 'HP', 'Damage', 'Level', 'QuestName', 'Die', 'Any', BOOL_LIT, INT_LIT, FLOAT_LIT, STRING_LIT, DIE_LIT, INTERP_STRING, ID}
+Syntax error(s) found. Execution aborted.
+
+Spiegazione:
+
+ifStat : IF '(' expr ')' block (ELSE block)? ;
+Else può essere solo :
+else { ... }
+non può essere:
+else if (...)
+_______________________________________________________________________
+
+    spell Damage FireBall(Damage base){
+        return (Damage)base + roll 1d6;  <-- corretto!!
+    }
+
+// return roll 1d6 + base non funziona, deve essere invertito,
+ serve (damage) prima di roll perchè deve ritornare un tipo:Damage, normalmente returna Int e da errore TypeMismatch 
+
+ _______________________________________________________________________
+
+     Damage dmg = (Damage)roll 2d8;                             
+      //Damage dmg = roll 2d8; da errore mismatch
+
+      altro esempio:
+
+    Int x = 10;                                                
+    Damage d = 5;   //[TypeCheck] line 49:4 – Cannot assign Int to variable of type Damage
+    x = d;
+
+    Deve essere scritto 
+    Damage d = (Damage)5;
+
+    così facendo 
+    x = d; <- corretto!
+
+    NB: posso assegnare Damage ad un int, ma non posso assegnare int ad un Damage
+    d = x; Error: Cannot assign Int to 'd' (type Damage)
