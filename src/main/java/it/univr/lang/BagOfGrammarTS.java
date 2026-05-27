@@ -363,6 +363,39 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
         return null;
     }
 
+    @Override
+    public Type visitAssignFieldAdd(BagOfGrammarParser.AssignFieldAddContext ctx) {
+        return checkCompoundField(ctx, ctx.ID(0).getText(), ctx.ID(1).getText(), ctx.expr());
+    }
+    @Override
+    public Type visitAssignFieldSub(BagOfGrammarParser.AssignFieldSubContext ctx) {
+        return checkCompoundField(ctx, ctx.ID(0).getText(), ctx.ID(1).getText(), ctx.expr());
+    }
+    @Override
+    public Type visitAssignFieldMul(BagOfGrammarParser.AssignFieldMulContext ctx) {
+        return checkCompoundField(ctx, ctx.ID(0).getText(), ctx.ID(1).getText(), ctx.expr());
+    }
+    @Override
+    public Type visitAssignFieldDiv(BagOfGrammarParser.AssignFieldDivContext ctx) {
+        return checkCompoundField(ctx, ctx.ID(0).getText(), ctx.ID(1).getText(), ctx.expr());
+    }
+    @Override
+    public Type visitAssignFieldMod(BagOfGrammarParser.AssignFieldModContext ctx) {
+        return checkCompoundField(ctx, ctx.ID(0).getText(), ctx.ID(1).getText(), ctx.expr());
+    }
+
+    private Type checkCompoundField(org.antlr.v4.runtime.ParserRuleContext ctx,
+                                    String objName, String fieldName, BagOfGrammarParser.ExprContext exprCtx) {
+        Type objType   = lookup(objName, ctx);
+        Type fieldType = resolveField(objType, fieldName, ctx);
+        Type exprType  = visit(exprCtx);
+        if (!isNumeric(fieldType))
+            error(ctx, "Compound assignment requires a numeric field, got " + fieldType);
+        if (!isNumeric(exprType))
+            error(ctx, "Compound assignment requires a numeric expression, got " + exprType);
+        return null;
+    }
+
     // Increment and decrement
     @Override public Type visitPreInc(BagOfGrammarParser.PreIncContext ctx) { return checkIncDecStat(ctx, ctx.ID().getText()); }
     @Override public Type visitPreDec(BagOfGrammarParser.PreDecContext ctx) { return checkIncDecStat(ctx, ctx.ID().getText()); }
@@ -379,9 +412,11 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
     // Control flow
     @Override
     public Type visitIfStat(BagOfGrammarParser.IfStatContext ctx) {
-        Type cond = visit(ctx.expr());
-        if (!isBool(cond))
-            error(ctx, "Condition of 'if' must be Bool, got " + cond);
+        for (BagOfGrammarParser.ExprContext e : ctx.expr()) {
+            Type cond = visit(e);
+            if (!isBool(cond))
+                error(ctx, "Condition of 'if'/'else if' must be Bool, got " + cond);
+        }
         for (BagOfGrammarParser.BlockContext b : ctx.block())
             visit(b);
         return null;

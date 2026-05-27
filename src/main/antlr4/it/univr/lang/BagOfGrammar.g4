@@ -96,6 +96,11 @@ assign : ID '=' expr                # AssignSimple
        | ID '*=' expr               # AssignMul
        | ID '/=' expr               # AssignDiv
        | ID '%=' expr               # AssignMod
+       | ID '.' ID '+=' expr        # AssignFieldAdd
+       | ID '.' ID '-=' expr        # AssignFieldSub
+       | ID '.' ID '*=' expr        # AssignFieldMul
+       | ID '.' ID '/=' expr        # AssignFieldDiv
+       | ID '.' ID '%=' expr        # AssignFieldMod
        ;
 
 // Pre/post increment/decrement as standalone statements (advanced feature: Zucchero sintattico)
@@ -110,11 +115,11 @@ incDecStat : '++' ID    # PreInc
 //  CONTROL FLOW
 // ----------------------------------------
 
-ifStat : IF '(' expr ')' block (ELSE block)? ;
+ifStat : IF '(' expr ')' block (ELSE IF '(' expr ')' block)* (ELSE block)? ;
 
 untilStat : UNTIL '(' expr ')' block ;
 
-// For with optional else (advanced feature: Flusso di controllo condizionato).
+// For with optional break or else (advanced feature: Flusso di controllo condizionato).
 forStat : FOR ID FROM expr TO expr block (ELSE block)? ;
 
 // Switch statement (advanced feature: Flusso di controllo condizionato).
@@ -253,7 +258,7 @@ INTERP_STRING   : 'i"' (INTERP_CHAR | INTERP_EXPR)* '"' ;
 
 // Framgents -> Pieces to use inside other tokens (improves readability)
 
-fragment INTERP_CHAR : ~["\\\n$] | '\\' . | '$' ~[{] ;
+fragment INTERP_CHAR : ~["\\\n$] | '\\' [ntr"\\] | '$' ~[{] ;
 fragment INTERP_EXPR : '${' (~[}])* '}' ;
 
 // ----------------------------------------

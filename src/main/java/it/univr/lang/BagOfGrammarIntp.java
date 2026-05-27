@@ -225,6 +225,34 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
         return null;
     }
 
+    @Override
+    public ExpValue<?> visitAssignFieldAdd(BagOfGrammarParser.AssignFieldAddContext ctx) {
+        return applyCompoundField(ctx.ID(0).getText(), ctx.ID(1).getText(), visitExpr(ctx.expr()), "+");
+    }
+    @Override
+    public ExpValue<?> visitAssignFieldSub(BagOfGrammarParser.AssignFieldSubContext ctx) {
+        return applyCompoundField(ctx.ID(0).getText(), ctx.ID(1).getText(), visitExpr(ctx.expr()), "-");
+    }
+    @Override
+    public ExpValue<?> visitAssignFieldMul(BagOfGrammarParser.AssignFieldMulContext ctx) {
+        return applyCompoundField(ctx.ID(0).getText(), ctx.ID(1).getText(), visitExpr(ctx.expr()), "*");
+    }
+    @Override
+    public ExpValue<?> visitAssignFieldDiv(BagOfGrammarParser.AssignFieldDivContext ctx) {
+        return applyCompoundField(ctx.ID(0).getText(), ctx.ID(1).getText(), visitExpr(ctx.expr()), "/");
+    }
+    @Override
+    public ExpValue<?> visitAssignFieldMod(BagOfGrammarParser.AssignFieldModContext ctx) {
+        return applyCompoundField(ctx.ID(0).getText(), ctx.ID(1).getText(), visitExpr(ctx.expr()), "%");
+    }
+
+    private ExpValue<?> applyCompoundField(String objName, String fieldName, ExpValue<?> rhs, String op) {
+        ObjectValue obj = (ObjectValue) mem.getValue(objName);
+        ExpValue<?> current = obj.getField(fieldName);
+        obj.setField(fieldName, applyArith(current, rhs, op));
+        return null;
+    }
+
     // Inc/dec statements
     @Override public ExpValue<?> visitPreInc(BagOfGrammarParser.PreIncContext ctx){
         applyIncDec(ctx.ID().getText(), 1);
@@ -253,10 +281,18 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     @Override
     public ExpValue<?> visitIfStat(BagOfGrammarParser.IfStatContext ctx) {
         BagOfGrammarIntp branch = newBranch();
-        if (visitBoolExpr(ctx.expr()).toJavaValue())
-            branch.visit(ctx.block(0));
-        else if (ctx.block().size() > 1)
-            branch.visit(ctx.block(1));
+        List<BagOfGrammarParser.ExprContext> exprs = ctx.expr();
+        List<BagOfGrammarParser.BlockContext> blocks = ctx.block();
+        boolean matched = false;
+        for (int i = 0; i < exprs.size(); i++) { // visits all if/else if blocks
+            if (visitBoolExpr(exprs.get(i)).toJavaValue()) {
+                branch.visit(blocks.get(i));
+                matched = true;
+                break; // breaks after executing true block
+            }
+        }
+        if (!matched && blocks.size() > exprs.size()) // else
+            branch.visit(blocks.get(blocks.size() - 1));
         mem.mergeFrom(branch.getMem());
         return null;
     }
@@ -282,29 +318,29 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     @Override
     public ExpValue<?> visitForStat(BagOfGrammarParser.ForStatContext ctx) {
         int from = visitIntExpr(ctx.expr(0)).toJavaValue();
-        int to   = visitIntExpr(ctx.expr(1)).toJavaValue();
+        int to = visitIntExpr(ctx.expr(1)).toJavaValue();
         String loopVar = ctx.ID().getText();
 
         mem.pushScope();
         mem.declareInit(loopVar, SimpleType.INT, new IntValue(from));
 
-        boolean executed = false;
+        boolean brokeOut = false;
         try {
             for (int i = from; i <= to; i++) {
                 mem.setValue(loopVar, new IntValue(i));
-                executed = true;
                 BagOfGrammarIntp branch = newBranch();
                 try {
                     branch.visit(ctx.block(0));
                 } catch (BreakException e) {
                     mem.mergeFrom(branch.getMem());
+                    brokeOut = true;
                     break;
                 }
                 mem.mergeFrom(branch.getMem());
             }
 
-            if (!executed && ctx.block().size() > 1)
-                visit(ctx.block(1));
+            if (!brokeOut && ctx.block().size() > 1)
+                visit(ctx.block(1)); // performs else block only if it has not broke out of loop
 
         } finally {
             mem.popScope();
@@ -445,6 +481,9 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     public ExpValue<?> visitExprInterpString(BagOfGrammarParser.ExprInterpStringContext ctx) {
         String body = ctx.INTERP_STRING().getText();
         body = body.substring(2, body.length() - 1); // strip i" and "
+        body = body.replace("\\n", "\n").replace("\\t", "\t")
+                .replace("\\r", "\r").replace("\\\"", "\"")
+                .replace("\\\\", "\\");
         StringBuffer sb = new StringBuffer();
         Matcher m = Pattern.compile("\\$\\{([^}]+)}").matcher(body);
         while (m.find()) {
