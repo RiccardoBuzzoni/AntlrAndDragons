@@ -51,15 +51,19 @@ public enum SimpleType implements ExpType{
             return true;
         }
         if(other instanceof SimpleType o){
+            if (o == ANY) {
+                return true;
+            }
+
             // Subtyping rules for numeric and domain types
-            if(this == INT) {
-                return o == HP || o == DAMAGE || o == LEVEL;
+            if ((this == HP || this == DAMAGE || this == LEVEL) && o == INT) {
+                return true;
             }
-            if(this == FLOAT){
-                return o == INT;
+            if ((this == QUESTNAME || this == DIE) && o == STRING) {
+                return true;
             }
-            if(this == STRING){
-                return o == QUESTNAME || o == DIE;
+            if (this == INT && o == FLOAT) {
+                return true;
             }
         }
         return false;

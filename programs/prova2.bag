@@ -23,7 +23,7 @@ spellbook:
     }
 
     spell Damage Fireball(Int base){
-        return (Damage)base + roll 1d6; // return roll 1d6 + base non funziona, deve essere invertito, serve (damage) prima di roll perchè deve ritornare un tipo:Damage, normalmente returna Int e da errore TypeMismatch
+        return (Damage) (base + roll 1d6); // return roll 1d6 + base non funziona, deve essere invertito, serve (damage) prima di roll perchè deve ritornare un tipo:Damage, normalmente returna Int e da errore TypeMismatch
     }
 
 quest:
@@ -55,6 +55,17 @@ quest:
 
     Int x = 1 + 2 * 3; //=9, non rispetta l'ordine modificare doc**
     narrate x;
+
+    Damage danno = 10;
+    Int ciao = danno;
+
+    narrate i"Funziona ${ciao}";
+
+    Int x = 2;
+    Bool risultato;
+
+    Bool risultato = x % 2 eq 0 ? true : false;
+    narrate risultato;
 
 
 }

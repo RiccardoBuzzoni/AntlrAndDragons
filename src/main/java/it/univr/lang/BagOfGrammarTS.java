@@ -64,8 +64,15 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
         if(to == SimpleType.INT &&
                 (from == SimpleType.HP || from == SimpleType.DAMAGE || from == SimpleType.LEVEL))
             return true; // subtypes of Integer
+        if (from == SimpleType.INT &&
+                (to == SimpleType.HP || to == SimpleType.DAMAGE || to == SimpleType.LEVEL)) {
+            return true; // coercion
+        }
         if (to == SimpleType.STRING && (from == SimpleType.QUESTNAME || from == SimpleType.DIE))
             return true; // subtypes of String
+        if (from == SimpleType.STRING && (to == SimpleType.QUESTNAME || to == SimpleType.DIE)) {
+            return true; // coercion
+        }
         if (to == SimpleType.FLOAT &&
                 (from == SimpleType.INT || from == SimpleType.HP ||
                         from == SimpleType.DAMAGE || from == SimpleType.LEVEL))

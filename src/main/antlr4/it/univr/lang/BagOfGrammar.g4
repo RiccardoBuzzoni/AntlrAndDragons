@@ -150,32 +150,32 @@ argList : expr (',' expr)* ;
 //  9. Postfix
 // ----------------------------------------
 
-expr : expr '?' expr ':' expr                       # ExprTernary
-     | expr op=('or' | 'and') expr                  # ExprLogical
-     | expr op=('eq' | 'neq') expr                  # ExprEquality
-     | expr op=('lt' | 'gt' | 'lte' | 'gte') expr   # ExprRelational
-     | expr op=('+' | '-') expr                     # ExprAddSub
-     | expr op=('*' | '/' | '%') expr               # ExprMulDivMod
-     | 'not' expr                                   # ExprNot
-     | '-' expr                                     # ExprNeg
-     | ROLL expr                                    # ExprRoll
-     | '(' type ')' expr                            # ExprCast
-     | '++' ID                                      # ExprPreInc
-     | '--' ID                                      # ExprPreDec
-     | ID '++'                                      # ExprPostInc
-     | ID '--'                                      # ExprPostDec
-     | SUMMON ID '(' ')'                            # ExprNew
-     | expr '.' spellCall                           # ExprMethodCall
-     | expr '.' ID                                  # ExprFieldAccess
-     | spellCall                                    # ExprFuncCall
-     | ID                                           # ExprId
-     | INT_LIT                                      # ExprInt
-     | FLOAT_LIT                                    # ExprFloat
-     | BOOL_LIT                                     # ExprBool
-     | STRING_LIT                                   # ExprString
-     | INT_LIT? DIE_LIT                             # ExprDie
-     | INTERP_STRING                                # ExprInterpString
-     | '(' expr ')'                                 # ExprParen
+expr : expr '.' spellCall                             # ExprMethodCall
+     | expr '.' ID                                    # ExprFieldAccess
+     | 'not' expr                                     # ExprNot
+     | '-' expr                                       # ExprNeg
+     | ROLL expr                                      # ExprRoll
+     | '(' type ')' expr                              # ExprCast
+     | '++' ID                                        # ExprPreInc
+     | '--' ID                                        # ExprPreDec
+     | ID '++'                                        # ExprPostInc
+     | ID '--'                                        # ExprPostDec
+     | expr op=('*' | '/' | '%') expr                 # ExprMulDivMod
+     | expr op=('+' | '-') expr                       # ExprAddSub
+     | expr op=('lt' | 'gt' | 'lte' | 'gte') expr     # ExprRelational
+     | expr op=('eq' | 'neq') expr                    # ExprEquality
+     | expr op=('and' | 'or') expr                    # ExprLogical
+     | <assoc=right> expr '?' expr ':' expr           # ExprTernary
+     | SUMMON ID '(' ')'                              # ExprNew
+     | spellCall                                      # ExprFuncCall
+     | ID                                             # ExprId
+     | INT_LIT                                        # ExprInt
+     | FLOAT_LIT                                      # ExprFloat
+     | BOOL_LIT                                       # ExprBool
+     | STRING_LIT                                     # ExprString
+     | INT_LIT? DIE_LIT                               # ExprDie
+     | INTERP_STRING                                  # ExprInterpString
+     | '(' expr ')'                                   # ExprParen
      ;
 
 // ----------------------------------------
