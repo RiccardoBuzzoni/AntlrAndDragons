@@ -1,0 +1,139 @@
+creatures:
+
+creature Druid {
+
+    known HP hp;
+
+    known Damage thornWhip() {
+
+        narrate "Il druido usa Thorn Whip!";
+        return roll d8;
+    }
+
+    known Damage moonFire() {
+
+        narrate "Il druido evoca Moon Fire!";
+        return roll d10;
+    }
+
+    known HP natureHeal() {
+
+        narrate "La natura cura il druido!";
+        return roll d6;
+    }
+}
+
+creature Ghoul {
+
+    known HP hp;
+
+    known Damage clawAttack() {
+
+        narrate "Il ghoul attacca con gli artigli!";
+        return roll d6;
+    }
+}
+
+
+
+quest:
+{
+
+    Druid druid = summon Druid();
+    Ghoul ghoul = summon Ghoul();
+
+    druid.hp = 30;
+    ghoul.hp = 35;
+
+    narrate "=== BATTAGLIA: DRUIDO VS GHOUL ===";
+
+    // massimo 6 turni
+    // se il ghoul sopravvive -> else
+
+    for turn from 1 to 6 {
+
+        narrate "----------------";
+        narrate i"Turno ${turn}";
+
+        // =========================
+        // TURNO DRUIDO
+        // =========================
+
+        Int action = roll d6;
+
+        Damage atk = 0;
+
+        switch (action) {
+
+            case 1:
+            case 2:
+
+                atk = druid.cast thornWhip();
+                break;
+
+            case 3:
+            case 4:
+
+                atk = druid.cast moonFire();
+                break;
+
+            case 5:
+            case 6:
+
+                HP heal = druid.cast natureHeal();
+
+                druid.hp += heal;
+
+                narrate i"Il druido recupera ${heal} HP";
+
+                break;
+        }
+
+        // applica danni al ghoul
+
+        if (atk gt 0) {
+
+            ghoul.hp -= atk;
+
+            narrate i"Ghoul subisce ${atk} danni!";
+            narrate i"HP Ghoul: ${ghoul.hp}";
+        }
+
+        // controllo morte ghoul
+
+        if (ghoul.hp lte 0) {
+
+            narrate "Il ghoul è stato sconfitto!";
+            break;
+        }
+
+        // =========================
+        // TURNO GHOUL
+        // =========================
+
+        Damage ghoulAtk = ghoul.cast clawAttack();
+
+        druid.hp -= ghoulAtk;
+
+        narrate i"Il druido subisce ${ghoulAtk} danni!";
+        narrate i"HP Druido: ${druid.hp}";
+
+        // controllo morte druido
+
+        if (druid.hp lte 0) {
+
+            narrate "Il druido è caduto...";
+            break;
+        }
+    }
+
+    else {
+
+        narrate "Il combattimento dura troppo!";
+
+        narrate "Il ghoul fugge nella nebbia...";
+
+    }
+
+    narrate "=== FINE BATTAGLIA ===";
+}

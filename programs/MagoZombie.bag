@@ -7,12 +7,12 @@ creature Wizard {
 
     known Damage ignis() {
         narrate "Lo stregone lancia Ignis!";
-        return (Damage) roll d6;
+        return roll d6;
     }
 
     known Damage acidSpray() {
         narrate "Lo stregone usa Spruzzo Acido!";
-        return (Damage) roll d8;
+        return roll d8;
     }
 
     known Bool holdPerson() {
@@ -42,7 +42,7 @@ creature Zombie {
 
     known Damage bite() {
         narrate "Lo zombie morde!";
-        return (Damage) roll d6;
+        return roll d6;
     }
 }
 
@@ -55,14 +55,14 @@ quest:
 
     Zombie zombie1 = summon Zombie();
 
-    mage.hp = (HP)50;
+    mage.hp = 50;
 
-    zombie1.hp = (HP)30;
+    zombie1.hp = 30;
 
     Bool secondZombieSummoned = false;
 
     Zombie zombie2 = summon Zombie();
-    zombie2.hp = (HP)20;
+    zombie2.hp = 20;
 
     Int blockedTurns = 0;
 
@@ -80,7 +80,7 @@ quest:
 
         Int action = roll d6;
 
-        Damage mageDamage = (Damage)0;
+        Damage mageDamage = 0;
 
         Bool targetZombie2 = false;
 
@@ -153,7 +153,7 @@ quest:
 
             if (targetZombie2 eq true) {
 
-                zombie2.hp = (HP)(zombie2.hp - mageDamage);
+                zombie2.hp = zombie2.hp - mageDamage;
 
                 narrate i"Zombie 2 subisce ${mageDamage} danni!";
                 narrate i"HP Zombie2: ${zombie2.hp}";
@@ -161,7 +161,7 @@ quest:
 
             else {
 
-                zombie1.hp = (HP)(zombie1.hp - mageDamage);
+                zombie1.hp = zombie1.hp - mageDamage;
 
                 narrate i"Zombie 1 subisce ${mageDamage} danni!";
                 narrate i"HP Zombie1: ${zombie1.hp}";
@@ -185,7 +185,7 @@ quest:
 
                 Damage zombieAtk = zombie1.cast bite();
 
-                mage.hp = (HP)(mage.hp - zombieAtk);
+                mage.hp = mage.hp - zombieAtk;
 
                 narrate i"Il mago subisce ${zombieAtk} danni!";
             }
@@ -199,7 +199,7 @@ quest:
 
             Damage zombieAtk2 = zombie2.cast bite();
 
-            mage.hp = (HP)(mage.hp - zombieAtk2);
+            mage.hp = mage.hp - zombieAtk2;
 
             narrate i"Zombie alleato infligge ${zombieAtk2} danni!";
         }
