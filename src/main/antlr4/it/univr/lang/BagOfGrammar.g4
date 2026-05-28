@@ -62,7 +62,6 @@ block : '{' stat* '}' ;
 
 stat : varDecl ';'              # StatVarDecl
      | assign ';'               # StatAssign
-     | incDecStat ';'           # StatIncDec
      | ifStat                   # StatIf
      | untilStat                # StatWhile
      | forStat                  # StatFor
@@ -72,9 +71,8 @@ stat : varDecl ';'              # StatVarDecl
      | RETURN ';'               # StatReturnVoid
      | BREAK ';'                # StatBreak
      | FLEE ';'                 # StatExit
-     | spellCall ';'            # StatFuncCall
-     | expr '.' spellCall ';'   # StatMethodCall
      | block                    # StatBlock
+     | expr ';'                 # StatExpr
      ;
 
 // ----------------------------------------
@@ -89,27 +87,9 @@ varDecl : type ID '=' expr                      # VarDeclInit
 //  ASSIGNMENTS (includes Zucchero sintattico)
 // ----------------------------------------
 
-assign : ID '=' expr                # AssignSimple
-       | ID '.' ID '=' expr         # AssignField
-       | ID '+=' expr               # AssignAdd
-       | ID '-=' expr               # AssignSub
-       | ID '*=' expr               # AssignMul
-       | ID '/=' expr               # AssignDiv
-       | ID '%=' expr               # AssignMod
-       | ID '.' ID '+=' expr        # AssignFieldAdd
-       | ID '.' ID '-=' expr        # AssignFieldSub
-       | ID '.' ID '*=' expr        # AssignFieldMul
-       | ID '.' ID '/=' expr        # AssignFieldDiv
-       | ID '.' ID '%=' expr        # AssignFieldMod
-       ;
-
-// Pre/post increment/decrement as standalone statements (advanced feature: Zucchero sintattico)
-
-incDecStat : '++' ID    # PreInc
-           | '--' ID    # PreDec
-           | ID '++'    # PostInc
-           | ID '--'    # PostDec
-           ;
+assignTarget : ID | ID '.' ID ;
+assignOp     : '=' | '+=' | '-=' | '*=' | '/=' | '%=' ;
+assign       : assignTarget assignOp expr ;
 
 // ----------------------------------------
 //  CONTROL FLOW
@@ -148,6 +128,7 @@ argList : expr (',' expr)* ;
 //  7. Unary
 //  8. Cast (advanced feature: Conversione di tipo)
 //  9. Postfix
+//  10. Pre/post increment/decrement as standalone statements (advanced feature: Zucchero sintattico)
 // ----------------------------------------
 
 expr : expr '.' spellCall                             # ExprMethodCall
@@ -250,8 +231,8 @@ ANY         : 'Any'         ;
 // ----------------------------------------
 
 BOOL_LIT        : 'true' | 'false' ;
-INT_LIT         : [0-9]+  ;
 FLOAT_LIT       : [0-9]+ '.' [0-9]+ ;
+INT_LIT         : [0-9]+  ;
 STRING_LIT      : '"' (~["\\\n] | '\\' .)* '"' ; // No interpolation
 DIE_LIT         : 'd'('4'|'6'|'8'|'10'|'%'|'12'|'20') ;
 INTERP_STRING   : 'i"' (INTERP_CHAR | INTERP_EXPR)* '"' ;
@@ -259,7 +240,7 @@ INTERP_STRING   : 'i"' (INTERP_CHAR | INTERP_EXPR)* '"' ;
 // Framgents -> Pieces to use inside other tokens (improves readability)
 
 fragment INTERP_CHAR : ~["\\\n$] | '\\' [ntr"\\] | '$' ~[{] ;
-fragment INTERP_EXPR : '${' (~[}])* '}' ;
+fragment INTERP_EXPR : '${' [a-zA-Z_][a-zA-Z_0-9]* '}' ;
 
 // ----------------------------------------
 //  IDENTIFIERS
@@ -272,5 +253,5 @@ ID : [a-zA-Z_] [a-zA-Z_0-9]* ;
 // ----------------------------------------
 
 WS : [ \t\r\n]+ -> skip ;
-LINE_COMMENT : '//' ~[\r\n]* -> skip ;
-BLOCK_COMMENT: '/*' .*? '*/' -> skip ;
+LINE_COMMENT : '//' ~[\r\n]* -> channel(HIDDEN) ;
+BLOCK_COMMENT: '/*' .*? '*/' -> channel(HIDDEN) ;
