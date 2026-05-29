@@ -40,6 +40,14 @@ public class Main {
             System.exit(1);
         }
 
+        // Semantic checking
+        // Symbols collection
+        BagOfGrammarSymColl collector = new BagOfGrammarSymColl();
+        collector.visit(tree);
+        // Symbol accuracy
+        BagOfGrammarSemCheck checker = new BagOfGrammarSemCheck(collector.declaredCreatures);
+        checker.visit(tree);
+
         // Interpretation
         BagOfGrammarIntp interpreter = new BagOfGrammarIntp();
         interpreter.visit(tree);
