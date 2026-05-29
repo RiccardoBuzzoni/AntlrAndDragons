@@ -33,10 +33,9 @@ questBlock : QUEST ':' block ;
 
 creatureDecl : CREATURE ID '{' creatureMember* '}' ;
 
-creatureMember : visibility type ID ';'                        # ClassField
-               | visibility type ID '(' paramList? ')' block   # ClassMethodReturn
-               | visibility VOID ID '(' paramList? ')' block   # ClassMethodVoid
-               ;
+returnType : type | VOID ;
+
+creatureMember : visibility returnType ID ('(' paramList? ')' block | ';') ;
 
 visibility : KNOWN
            | UNSEEN
@@ -46,9 +45,7 @@ visibility : KNOWN
 //  FUNCTIONS (advanced feature: Funzioni)
 // ----------------------------------------
 
-spellDecl : SPELL type ID '(' paramList? ')' block # FuncDeclReturn
-          | SPELL VOID ID '(' paramList? ')' block # FuncDeclVoid
-          ;
+spellDecl : SPELL returnType ID '(' paramList? ')' block # FuncDecl ;
 
 paramList : param (',' param)* ;
 
@@ -100,14 +97,14 @@ ifStat : IF '(' expr ')' block (ELSE IF '(' expr ')' block)* (ELSE block)? ;
 untilStat : UNTIL '(' expr ')' block ;
 
 // For with optional break or else (advanced feature: Flusso di controllo condizionato).
-forStat : FOR ID FROM expr TO expr block (ELSE block)? ;
+forStat : FOR type? ID FROM expr TO expr block ;
 
 // Switch statement (advanced feature: Flusso di controllo condizionato).
 switchStat : SWITCH '(' expr ')' '{' caseClause+ defaultClause? '}' ;
 
-caseClause : CASE expr ':' stat* ;
+caseClause : CASE expr ':' block ;
 
-defaultClause : DEFAULT ':' stat* ;
+defaultClause : DEFAULT ':' block ;
 
 // ----------------------------------------
 //  FUNCTION CALLS
@@ -135,7 +132,6 @@ expr : expr '.' spellCall                             # ExprMethodCall
      | expr '.' ID                                    # ExprFieldAccess
      | 'not' expr                                     # ExprNot
      | '-' expr                                       # ExprNeg
-     | ROLL expr                                      # ExprRoll
      | '(' type ')' expr                              # ExprCast
      | '++' ID                                        # ExprPreInc
      | '--' ID                                        # ExprPreDec
@@ -147,6 +143,7 @@ expr : expr '.' spellCall                             # ExprMethodCall
      | expr op=('eq' | 'neq') expr                    # ExprEquality
      | expr op=('and' | 'or') expr                    # ExprLogical
      | <assoc=right> expr '?' expr ':' expr           # ExprTernary
+     | ROLL expr                                      # ExprRoll
      | SUMMON ID '(' ')'                              # ExprNew
      | spellCall                                      # ExprFuncCall
      | ID                                             # ExprId
