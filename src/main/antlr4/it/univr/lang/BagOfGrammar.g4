@@ -97,7 +97,7 @@ ifStat : IF '(' expr ')' block (ELSE IF '(' expr ')' block)* (ELSE block)? ;
 untilStat : UNTIL '(' expr ')' block ;
 
 // For with optional break or else (advanced feature: Flusso di controllo condizionato).
-forStat : FOR type? ID FROM expr TO expr block ;
+forStat : FOR type? ID FROM expr TO expr block (ELSE block)? ;
 
 // Switch statement (advanced feature: Flusso di controllo condizionato).
 switchStat : SWITCH '(' expr ')' '{' caseClause+ defaultClause? '}' ;
@@ -237,7 +237,7 @@ INTERP_STRING   : 'i"' (INTERP_CHAR | INTERP_EXPR)* '"' ;
 // Framgents -> Pieces to use inside other tokens (improves readability)
 
 fragment INTERP_CHAR : ~["\\\n$] | '\\' [ntr"\\] | '$' ~[{] ;
-fragment INTERP_EXPR : '${' [a-zA-Z_][a-zA-Z_0-9]* '}' ;
+fragment INTERP_EXPR : '${' (~[}])* '}' ;
 
 // ----------------------------------------
 //  IDENTIFIERS
