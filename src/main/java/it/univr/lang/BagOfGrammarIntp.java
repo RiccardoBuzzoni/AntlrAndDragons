@@ -670,4 +670,26 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
         return null;
     }
 
+    // User input
+    @Override
+    public ExpValue<?> visitExprDeclare(BagOfGrammarParser.ExprDeclareContext ctx) {
+        String prompt = visitStringExpr(ctx.expr()).toJavaValue();
+        System.out.println(prompt); // use print not println!
+        System.out.flush(); // empties output buffer
+
+        java.util.Scanner scanner = new java.util.Scanner(System.in);
+        String input = scanner.nextLine().trim();
+
+        ExpType targetType = resolveType(ctx.type());
+        if (targetType == SimpleType.INT || targetType == SimpleType.HP
+                || targetType == SimpleType.DAMAGE || targetType == SimpleType.LEVEL) {
+            return new IntValue(Integer.parseInt(input));
+        } else if (targetType == SimpleType.FLOAT) {
+            return new DecValue(Double.parseDouble(input));
+        } else if (targetType == SimpleType.BOOL) {
+            return new BoolValue(Boolean.parseBoolean(input));
+        } else {
+            return new StringValue(input); // String, QuestName, Any
+        }
+    }
 }

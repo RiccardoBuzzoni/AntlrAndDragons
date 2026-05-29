@@ -67,6 +67,9 @@ quest:
     Bool risultato = x % 2 eq 0 ? true : false;
     narrate risultato;
 
+    QuestName nomeQuest = declare(QuestName, "Qual è il nome della quest?");
+    narrate nomeQuest;
+
 
 }
 

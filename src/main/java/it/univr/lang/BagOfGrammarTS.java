@@ -713,6 +713,17 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
         return t;
     }
 
+    // User input
+    @Override
+    public Type visitExprDeclare(BagOfGrammarParser.ExprDeclareContext ctx) {
+        Type promptType = visit(ctx.expr());
+        if (promptType != SimpleType.STRING && promptType != SimpleType.ANY
+                && !(promptType instanceof ErrType)) {
+            error(ctx, "'declare' prompt must be a String, got " + promptType);
+        }
+        return visitType(ctx.type()); // returns declared type
+    }
+
     // Type visitors
     private Type visitType(BagOfGrammarParser.TypeContext ctx) { return visit(ctx); }
 
