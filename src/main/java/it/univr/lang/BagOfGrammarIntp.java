@@ -126,9 +126,6 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     @Override public ExpValue<?> visitStatAssign(BagOfGrammarParser.StatAssignContext ctx){
         return visit(ctx.assign());
     }
-    @Override public ExpValue<?> visitStatIncDec(BagOfGrammarParser.StatIncDecContext ctx){
-        return visit(ctx.incDecStat());
-    }
     @Override public ExpValue<?> visitStatIf(BagOfGrammarParser.StatIfContext ctx){
         return visit(ctx.ifStat());
     }
@@ -143,6 +140,10 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     }
     @Override public ExpValue<?> visitStatBlock(BagOfGrammarParser.StatBlockContext ctx){
         return visit(ctx.block());
+    }
+    @Override public ExpValue<?> visitStatExpr(BagOfGrammarParser.StatExprContext ctx) {
+        visitExpr(ctx.expr());
+        return null;
     }
     @Override
     public ExpValue<?> visitStatPrint(BagOfGrammarParser.StatPrintContext ctx){
@@ -168,11 +169,6 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     @Override
     public ExpValue<?> visitStatFuncCall(BagOfGrammarParser.StatFuncCallContext ctx) {
         visit(ctx.spellCall());
-        return null;
-    }
-    @Override
-    public ExpValue<?> visitStatMethodCall(BagOfGrammarParser.StatMethodCallContext ctx) {
-        callMethod((ObjectValue) visitExpr(ctx.expr()), ctx.spellCall());
         return null;
     }
 
@@ -251,30 +247,6 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
         ExpValue<?> current = obj.getField(fieldName);
         obj.setField(fieldName, applyArith(current, rhs, op));
         return null;
-    }
-
-    // Inc/dec statements
-    @Override public ExpValue<?> visitPreInc(BagOfGrammarParser.PreIncContext ctx){
-        applyIncDec(ctx.ID().getText(), 1);
-        return null;
-    }
-    @Override public ExpValue<?> visitPreDec(BagOfGrammarParser.PreDecContext ctx){
-        applyIncDec(ctx.ID().getText(), -1);
-        return null;
-    }
-    @Override public ExpValue<?> visitPostInc(BagOfGrammarParser.PostIncContext ctx){
-        applyIncDec(ctx.ID().getText(), 1);
-        return null;
-    }
-    @Override public ExpValue<?> visitPostDec(BagOfGrammarParser.PostDecContext ctx){
-        applyIncDec(ctx.ID().getText(), -1);
-        return null;
-    }
-
-    private void applyIncDec(String id, int delta) {
-        ExpValue<?> v = mem.getValue(id);
-        mem.setValue(id, v instanceof IntValue i
-                ? new IntValue(i.toJavaValue() + delta) : new DecValue(((DecValue) v).toJavaValue() + delta));
     }
 
     // Control flow

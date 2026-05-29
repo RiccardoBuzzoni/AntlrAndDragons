@@ -244,12 +244,12 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
     // Statements
     @Override public Type visitStatVarDecl(BagOfGrammarParser.StatVarDeclContext ctx) { visit(ctx.varDecl()); return null; }
     @Override public Type visitStatAssign(BagOfGrammarParser.StatAssignContext ctx) { visit(ctx.assign()); return null; }
-    @Override public Type visitStatIncDec(BagOfGrammarParser.StatIncDecContext ctx) { visit(ctx.incDecStat()); return null; }
     @Override public Type visitStatIf(BagOfGrammarParser.StatIfContext ctx) { visit(ctx.ifStat()); return null; }
     @Override public Type visitStatWhile(BagOfGrammarParser.StatWhileContext ctx) { visit(ctx.untilStat()); return null; }
     @Override public Type visitStatFor(BagOfGrammarParser.StatForContext ctx) { visit(ctx.forStat()); return null; }
     @Override public Type visitStatSwitch(BagOfGrammarParser.StatSwitchContext ctx) { visit(ctx.switchStat()); return null; }
     @Override public Type visitStatBlock(BagOfGrammarParser.StatBlockContext ctx) { visit(ctx.block()); return null; }
+    @Override public Type visitStatExpr(BagOfGrammarParser.StatExprContext ctx) {visit(ctx.expr());return null;}
 
     @Override
     public Type visitStatPrint(BagOfGrammarParser.StatPrintContext ctx) {
@@ -291,26 +291,6 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
     @Override
     public Type visitStatFuncCall(BagOfGrammarParser.StatFuncCallContext ctx) {
         visit(ctx.spellCall());
-        return null;
-    }
-
-    @Override
-    public Type visitStatMethodCall(BagOfGrammarParser.StatMethodCallContext ctx) {
-        Type receiverType = visit(ctx.expr());
-        if (receiverType instanceof ErrType) return null;
-        if (!(receiverType instanceof ObjectType)) {
-            error(ctx, "Method call on non-object type: " + receiverType);
-            return null;
-        }
-        String className  = ((ObjectType) receiverType).getName();
-        String methodName = ctx.spellCall().ID().getText();
-        Map<String, Type> methods = creatureMethods.get(className);
-        if (methods == null || !methods.containsKey(methodName)) {
-            error(ctx, "Unknown method '" + methodName + "' on creature " + className);
-            return null;
-        }
-        FuncType ft = (FuncType) methods.get(methodName);
-        checkArgs(ctx.spellCall().argList(), ft, ctx);
         return null;
     }
 
@@ -400,19 +380,6 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
             error(ctx, "Compound assignment requires a numeric field, got " + fieldType);
         if (!isNumeric(exprType))
             error(ctx, "Compound assignment requires a numeric expression, got " + exprType);
-        return null;
-    }
-
-    // Increment and decrement
-    @Override public Type visitPreInc(BagOfGrammarParser.PreIncContext ctx) { return checkIncDecStat(ctx, ctx.ID().getText()); }
-    @Override public Type visitPreDec(BagOfGrammarParser.PreDecContext ctx) { return checkIncDecStat(ctx, ctx.ID().getText()); }
-    @Override public Type visitPostInc(BagOfGrammarParser.PostIncContext ctx) { return checkIncDecStat(ctx, ctx.ID().getText()); }
-    @Override public Type visitPostDec(BagOfGrammarParser.PostDecContext ctx) { return checkIncDecStat(ctx, ctx.ID().getText()); }
-
-    private Type checkIncDecStat(org.antlr.v4.runtime.ParserRuleContext ctx, String varName) {
-        Type t = lookup(varName, ctx);
-        if (!isNumeric(t))
-            error(ctx, "Increment/decrement requires numeric type, got " + t);
         return null;
     }
 

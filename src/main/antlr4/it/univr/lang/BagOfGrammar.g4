@@ -62,7 +62,6 @@ block : '{' stat* '}' ;
 
 stat : varDecl ';'              # StatVarDecl
      | assign ';'               # StatAssign
-     | incDecStat ';'           # StatIncDec
      | ifStat                   # StatIf
      | untilStat                # StatWhile
      | forStat                  # StatFor
@@ -73,8 +72,8 @@ stat : varDecl ';'              # StatVarDecl
      | BREAK ';'                # StatBreak
      | FLEE ';'                 # StatExit
      | spellCall ';'            # StatFuncCall
-     | expr '.' spellCall ';'   # StatMethodCall
      | block                    # StatBlock
+     | expr ';'                 # StatExpr
      ;
 
 // ----------------------------------------
@@ -102,14 +101,6 @@ assign : ID '=' expr                # AssignSimple
        | ID '.' ID '/=' expr        # AssignFieldDiv
        | ID '.' ID '%=' expr        # AssignFieldMod
        ;
-
-// Pre/post increment/decrement as standalone statements (advanced feature: Zucchero sintattico)
-
-incDecStat : '++' ID    # PreInc
-           | '--' ID    # PreDec
-           | ID '++'    # PostInc
-           | ID '--'    # PostDec
-           ;
 
 // ----------------------------------------
 //  CONTROL FLOW
@@ -175,7 +166,7 @@ expr : expr '.' spellCall                             # ExprMethodCall
      | STRING_LIT                                     # ExprString
      | INT_LIT? DIE_LIT                               # ExprDie
      | INTERP_STRING                                  # ExprInterpString
-     | DECLARE '(' type ',' expr ')'           # ExprDeclare
+     | DECLARE '(' type ',' expr ')'                  # ExprDeclare
      | '(' expr ')'                                   # ExprParen
      ;
 
@@ -252,8 +243,8 @@ ANY         : 'Any'         ;
 // ----------------------------------------
 
 BOOL_LIT        : 'true' | 'false' ;
-INT_LIT         : [0-9]+  ;
 FLOAT_LIT       : [0-9]+ '.' [0-9]+ ;
+INT_LIT         : [0-9]+  ;
 STRING_LIT      : '"' (~["\\\n] | '\\' .)* '"' ; // No interpolation
 DIE_LIT         : 'd'('4'|'6'|'8'|'10'|'%'|'12'|'20') ;
 INTERP_STRING   : 'i"' (INTERP_CHAR | INTERP_EXPR)* '"' ;

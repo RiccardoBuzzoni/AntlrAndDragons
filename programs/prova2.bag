@@ -70,6 +70,11 @@ quest:
     QuestName nomeQuest = declare(QuestName, "Qual è il nome della quest?");
     narrate nomeQuest;
 
+    Int k = 10;
+    Int a = k++;
+    Int b = ++k;
+
+    narrate i"${k}, ${a},  ${b}";
 
 }
 
