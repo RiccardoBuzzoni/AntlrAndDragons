@@ -495,13 +495,7 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
 
     @Override
     public Type visitExprRoll(BagOfGrammarParser.ExprRollContext ctx) {
-        Type exprType = visit(ctx.expr());
-
-        if (exprType != SimpleType.DIE && exprType != SimpleType.STRING && !(exprType instanceof ErrType)) {
-            error(ctx, "Operator 'roll' requires a Die operand, got " + exprType);
-            return ErrType.INSTANCE;
-        }
-        return SimpleType.INT; // die roll returns Integer
+        return SimpleType.INT;
     }
 
     @Override

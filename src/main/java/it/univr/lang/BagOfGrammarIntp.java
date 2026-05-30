@@ -475,16 +475,20 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
         return new StringValue(sb.toString());
     }
     @Override
-    public ExpValue<?> visitExprDie(BagOfGrammarParser.ExprDieContext ctx) {
-        String text = ctx.getText();
-        int dIdx = text.indexOf('d');
-        int numDice = dIdx > 0 ? Integer.parseInt(text.substring(0, dIdx)) : 1;
-        String face = text.substring(dIdx + 1);
-        int sides = face.equals("%") ? 100 : Integer.parseInt(face);
+    public ExpValue<?> visitExprDie(BagOfGrammarParser.ExprDieContext ctx) { // also manages roll function
+        return new StringValue(ctx.getText());
+    }
+
+    @Override
+    public ExpValue<?> visitExprRoll(BagOfGrammarParser.ExprRollContext ctx) {
+        String text = ctx.DIE_LIT().getText(); // ex. "d6", "d20"
+        int numDice = ctx.INT_LIT() != null ? Integer.parseInt(ctx.INT_LIT().getText()) : 1;
+        int sides = text.substring(1).equals("%") ? 100 : Integer.parseInt(text.substring(1));
         int total = 0;
         for (int i = 0; i < numDice; i++) total += rng.nextInt(sides) + 1;
         return new IntValue(total);
     }
+
     @Override
     public ExpValue<?> visitExprId(BagOfGrammarParser.ExprIdContext ctx) {
         return mem.getValue(ctx.ID().getText());

@@ -82,5 +82,11 @@ quest:
     Int danno_dimezzato = 7/2;
     narrate danno_dimezzato;
 
+    Int risultato = roll d6 + 10;
+    narrate risultato;
+
+    Die dado = d6;
+    narrate dado;
+
 }
 

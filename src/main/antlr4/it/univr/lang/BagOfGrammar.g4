@@ -149,7 +149,7 @@ expr : expr '.' spellCall                             # ExprMethodCall
      | expr '.' ID                                    # ExprFieldAccess
      | 'not' expr                                     # ExprNot
      | '-' expr                                       # ExprNeg
-     | ROLL expr                                      # ExprRoll
+     | ROLL INT_LIT? DIE_LIT                          # ExprRoll
      | '(' type ')' expr                              # ExprCast
      | '++' ID                                        # ExprPreInc
      | '--' ID                                        # ExprPreDec
