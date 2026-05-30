@@ -68,6 +68,7 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     @Override
     public ExpValue<?> visitProgram(BagOfGrammarParser.ProgramContext ctx) {
         if(ctx.creatureSection() != null) registerCreatures(ctx.creatureSection());
+        if(ctx.globalSection() != null) registerGlobals(ctx.globalSection());
         if(ctx.spellbookSection() != null) registerSpells(ctx.spellbookSection());
         return visit(ctx.questBlock());
     }
@@ -93,6 +94,11 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
                     ? fr.ID().getText() : ((BagOfGrammarParser.FuncDeclVoidContext) sd).ID().getText();
             spells.put(name, sd);
         }
+    }
+
+    private void registerGlobals(BagOfGrammarParser.GlobalSectionContext ctx) {
+        for (BagOfGrammarParser.VarDeclContext vd : ctx.varDecl())
+            visit(vd);
     }
 
     // Quest block

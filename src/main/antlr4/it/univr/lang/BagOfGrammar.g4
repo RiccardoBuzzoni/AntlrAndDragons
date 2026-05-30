@@ -15,11 +15,15 @@ grammar BagOfGrammar;
 // TOP-LEVEL PROGRAM STRUCTURE
 //      program: optional function declarations section, followed by the executable main block.
 
-program : creatureSection? spellbookSection? questBlock EOF ;
+program : creatureSection? globalSection? spellbookSection? questBlock EOF ;
 
 // Class declarations live in a dedicated, non-executable section.
 
 creatureSection : CREATURES ':' creatureDecl+ ;
+
+// Global environment
+
+globalSection : WORLD ':' (varDecl+ ';')+ ;
 
 // Function declarations live in a dedicated, non-executable section.
 
@@ -202,6 +206,7 @@ CREATURE : 'creature' ;
 SPELLBOOK : 'spellbook' ; // function declaration section header
 SPELL : 'spell' ;
 CAST : 'cast' ; // function call keyword
+WORLD : 'world' ;
 QUEST : 'quest' ; // main block header
 ROLL : 'roll' ;
 KNOWN : 'known' ;

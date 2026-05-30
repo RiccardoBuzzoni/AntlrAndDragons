@@ -70,11 +70,17 @@ quest:
     QuestName nomeQuest = declare(QuestName, "Qual è il nome della quest?");
     narrate nomeQuest;
 
+    Int intero = declare(Int, "Inserire un intero: ");
+    narrate i"L'intero che hai inserito è: ${intero}";
+
     Int k = 10;
     Int a = k++;
     Int b = ++k;
 
-    narrate i"${k}, ${a},  ${b}";
+    narrate i"${k}, ${a}, ${b}";
+
+    Int danno_dimezzato = 7/2;
+    narrate danno_dimezzato;
 
 }
 

@@ -1,0 +1,29 @@
+world:
+    Int x = 10;
+
+spellbook:
+    spell Int scopingTest(){
+        return x;
+    }
+
+    spell void paramTest(Int param){
+        param = 11;
+    }
+
+quest:
+{
+    narrate cast scopingTest();
+
+    {
+        Int x = 11;
+        narrate cast scopingTest();
+    }
+
+    narrate cast scopingTest();
+
+    Int y = 10;
+
+    cast paramTest(y);
+
+    narrate y;
+}

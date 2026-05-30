@@ -105,6 +105,7 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
         pushScope(); // global scope
         // Pass 1: register all signatures before type-checking bodies
         if (ctx.creatureSection() != null) registerCreatures(ctx.creatureSection());
+        if (ctx.globalSection() != null) visit(ctx.globalSection());
         if (ctx.spellbookSection() != null) registerSpells(ctx.spellbookSection());
         // Pass 2: check bodies
         if (ctx.creatureSection() != null) visit(ctx.creatureSection());
