@@ -1,0 +1,236 @@
+// ==================================================
+//  ANTLR & DRAGONS — DemoBattle.bag
+//  Small showcase of Antlr&Dragons functionalities
+//
+//  Features:
+//      - Classi e oggetti
+//      - Funzioni
+//      - Flusso di controllo condizionato (switch)
+//      - Zucchero sintattico
+//      - Cast (implicito ed esplicito)
+// ==================================================
+
+// Class definition
+creatures:
+
+    creature Hero{
+        known HP hp;
+        known Level level;
+        known Int strength_bonus;
+        known Int dexterity_bonus;
+        known Int proficiency_bonus;
+        known Int armour_class;
+
+        known Damage longswordDamage(Bool is_critical, Int bonus){
+            narrate "The hero strikes the goblin warrior with his sword!";
+            if(is_critical eq true){
+                return roll 2d8 + bonus;
+            }
+            else{
+                return roll d8 + bonus;
+            }
+        }
+
+        known Damage longbowDamage(Bool is_critical, Int bonus){
+            narrate "The hero hits the goblin warrior with his bow!";
+            if(is_critical eq true){
+                return roll 2d8 + bonus;
+            }
+            else{
+                return roll d8 + bonus;
+            }
+        }
+
+        known HP healingPotion(){
+            narrate "The hero drinks a small healing potion!";
+            return roll 2d4 + 2;
+        }
+    }
+
+    creature GoblinWarrior{
+        known HP hp;
+        known Int attack_bonus;
+        known Int damage_bonus;
+        known Int armour_class;
+
+
+        known Damage scimitarDamage(Bool is_critical, Int bonus){
+            narrate "The goblin warrior strikes the hero with his scimitar!";
+            if(is_critical eq true){
+                return roll 2d6 + bonus;
+            }
+            else{
+                return roll d6 + bonus;
+            }
+        }
+
+    }
+
+// Function definition
+spellbook:
+
+    spell void describeHero(HP hero_hp, Level hero_level) {
+        narrate "--- HeroStatus ---";
+        narrate i"  HP:    ${hero_hp}";
+        narrate i"  Level: ${hero_level}";
+        narrate "------------------";
+    }
+
+// Main
+quest:
+{
+    QuestName mission = "Slay the goblin warrior!";
+    String mission_name = mission; // non-numeric type chain
+    narrate "====================";
+    narrate mission_name;
+    narrate "====================";
+
+    Hero hero = summon Hero();
+    GoblinWarrior goblin_warrior = summon GoblinWarrior();
+
+    hero.hp = (HP) 40; // explicit casting
+    hero.level = (Level) 3;
+    hero.strength_bonus = 5;
+    hero.dexterity_bonus = 3;
+    hero.proficiency_bonus = 2;
+    hero.armour_class = 17;
+
+    goblin_warrior.hp = 25; // implicit casting
+    goblin_warrior.attack_bonus = 4;
+    goblin_warrior.damage_bonus = 2;
+    goblin_warrior.armour_class = 15;
+
+
+    narrate "Initial state:";
+    cast describeHero(hero.hp, hero.level);
+    narrate i"Goblin warrior -> HP = ${goblin_warrior.hp} \n";
+
+    // Battle loop
+    Int turn = 1;
+    until((hero.hp lte 0) or (goblin_warrior.hp lte 0)){
+        narrate i"===== TURN ${turn} =====";
+        narrate "Select an action:";
+        narrate "  1 -> Longsword attack";
+        narrate "  2 -> Longbow attack";
+        narrate "  3 -> Heal";
+        narrate "  4 -> Flee";
+        narrate "";
+
+        Damage damage = 0;
+        Bool valid_action = false;
+        Bool is_critical = false;
+
+        until(valid_action eq true){
+            Int action = declare(Int, "Select a valid action: ");
+
+            switch(action){
+                case 1:
+                    Int attack_roll = roll d20;
+                    if(attack_roll eq 20){
+                        narrate "Critical success!";
+                        is_critical = true;
+                        damage = hero.cast longswordDamage(is_critical, hero.strength_bonus);
+                        narrate i"The goblin warrior is hit for ${damage} hit points!";
+                        goblin_warrior.hp -= damage;
+                    }
+                    else{
+                        attack_roll += hero.strength_bonus;
+                        attack_roll += hero.proficiency_bonus;
+                        if(attack_roll gte goblin_warrior.armour_class){
+                            damage = hero.cast longswordDamage(is_critical, hero.strength_bonus);
+                            narrate i"Successful attack! [Attack roll = ${attack_roll}]";
+                            narrate i"The goblin warrior is hit for ${damage} hit points!";
+                            goblin_warrior.hp -= damage;
+                        }
+                        else{
+                            narrate i"Attack failed! [Attack roll = ${attack_roll}]";
+                        }
+                    }
+                    valid_action = true;
+                    break;
+                case 2:
+                    Int attack_roll = roll d20;
+                    if(attack_roll eq 20){
+                        narrate "Critical success!";
+                        is_critical = true;
+                        damage = hero.cast longbowDamage(is_critical, hero.dexterity_bonus);
+                        narrate i"The goblin warrior is hit for ${damage} hit points!";
+                        goblin_warrior.hp -= damage;
+                    }
+                    else{
+                        attack_roll += hero.dexterity_bonus;
+                        attack_roll += hero.proficiency_bonus;
+                        if(attack_roll gte goblin_warrior.armour_class){
+                            damage = hero.cast longbowDamage(is_critical, hero.dexterity_bonus);
+                            narrate i"Successful attack! [Attack roll = ${attack_roll}]";
+                            narrate i"The goblin warrior is hit for ${damage} hit points!";
+                            goblin_warrior.hp -= damage;
+                        }
+                        else{
+                            narrate i"Attack failed! [Attack roll = ${attack_roll}]";
+                        }
+                    }
+                    valid_action = true;
+                    break;
+                case 3:
+                    HP heal = hero.cast healingPotion();
+                    if(hero.hp + heal gte 40){
+                        narrate "The hero is fully healed!";
+                        hero.hp = 40;
+                    }
+                    else{
+                        narrate i"The hero is healed for ${heal} hit points!";
+                        hero.hp += heal;
+                        narrate i"The hero currently has ${hero.hp} hit points!";
+                    }
+                    valid_action = true;
+                    break;
+                case 4:
+                    narrate "The hero flees from battle... coward!";
+                    flee;
+                default:
+                    narrate "Invalid choice!";
+            }
+        }
+
+        if(goblin_warrior.hp lte 0){
+            narrate "====================";
+            narrate "The hero has slain the goblin!";
+            narrate "====================";
+            break;
+        }
+
+        // Goblin's turn
+        is_critical = false;
+        narrate "The goblin attacks!";
+        Int attack_roll = roll d20;
+        if(attack_roll eq 20){
+            narrate "Critical success!";
+            is_critical = true;
+            damage = goblin_warrior.cast scimitarDamage(is_critical, goblin_warrior.damage_bonus);
+            narrate i"The hero is hit for ${damage} hit points!";
+            hero.hp -= damage;
+        }
+        else{
+            attack_roll += goblin_warrior.attack_bonus;
+            if(attack_roll gte hero.armour_class){
+                damage = goblin_warrior.cast scimitarDamage(is_critical, goblin_warrior.damage_bonus);
+                narrate i"Successful attack! [Attack roll = ${attack_roll}]";
+                narrate i"The hero is hit for ${damage} hit points!";
+                hero.hp -= damage;
+            }
+            else{
+                narrate i"Attack failed! [Attack roll = ${attack_roll}]";
+            }
+        }
+
+        if(hero.hp lte 0){
+            narrate "====================";
+            narrate " The hero fell in battle!";
+            narrate "====================";
+        }
+        narrate "";
+        turn += 1;
+    }
+
+}
