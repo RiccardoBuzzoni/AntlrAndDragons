@@ -616,6 +616,30 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
         return pre ? updated : old;
     }
 
+    // Object field inc/dec
+    @Override public ExpValue<?> visitExprPreIncField(BagOfGrammarParser.ExprPreIncFieldContext ctx) {
+        return incDecField(ctx.ID(0).getText(), ctx.ID(1).getText(), 1, true);
+    }
+    @Override public ExpValue<?> visitExprPreDecField(BagOfGrammarParser.ExprPreDecFieldContext ctx) {
+        return incDecField(ctx.ID(0).getText(), ctx.ID(1).getText(), -1, true);
+    }
+    @Override public ExpValue<?> visitExprPostIncField(BagOfGrammarParser.ExprPostIncFieldContext ctx) {
+        return incDecField(ctx.ID(0).getText(), ctx.ID(1).getText(), 1, false);
+    }
+    @Override public ExpValue<?> visitExprPostDecField(BagOfGrammarParser.ExprPostDecFieldContext ctx) {
+        return incDecField(ctx.ID(0).getText(), ctx.ID(1).getText(), -1, false);
+    }
+
+    private ExpValue<?> incDecField(String objName, String fieldName, int delta, boolean pre) {
+        ObjectValue obj = (ObjectValue) mem.getValue(objName);
+        ExpValue<?> old = obj.getField(fieldName);
+        ExpValue<?> updated = old instanceof IntValue i
+                ? new IntValue(i.toJavaValue() + delta)
+                : new DecValue(((DecValue) old).toJavaValue() + delta);
+        obj.setField(fieldName, updated);
+        return pre ? updated : old;
+    }
+
     // Type resolution
     private ExpType resolveType(BagOfGrammarParser.TypeContext ctx) {
         return TypeUtils.fromString(ctx.getText());

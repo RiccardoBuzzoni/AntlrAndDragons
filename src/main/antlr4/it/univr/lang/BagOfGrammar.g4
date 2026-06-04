@@ -37,14 +37,10 @@ questBlock : QUEST ':' block ;
 
 creatureDecl : CREATURE ID '{' creatureMember* '}' ;
 
-creatureMember : visibility type ID ';'                        # ClassField
-               | visibility type ID '(' paramList? ')' block   # ClassMethodReturn
-               | visibility VOID ID '(' paramList? ')' block   # ClassMethodVoid
+creatureMember : type ID ';'                        # ClassField
+               | type ID '(' paramList? ')' block   # ClassMethodReturn
+               | VOID ID '(' paramList? ')' block   # ClassMethodVoid
                ;
-
-visibility : KNOWN
-           | UNSEEN
-           ;
 
 // ----------------------------------------
 //  FUNCTIONS (advanced feature: Funzioni)
@@ -151,8 +147,12 @@ expr : expr '.' spellCall                             # ExprMethodCall
      | '-' expr                                       # ExprNeg
      | ROLL INT_LIT? DIE_LIT                          # ExprRoll
      | '(' type ')' expr                              # ExprCast
+     | '++' ID '.' ID                                 # ExprPreIncField
+     | '--' ID '.' ID                                 # ExprPreDecField
      | '++' ID                                        # ExprPreInc
      | '--' ID                                        # ExprPreDec
+     | ID '.' ID '++'                                 # ExprPostIncField
+     | ID '.' ID '--'                                 # ExprPostDecField
      | ID '++'                                        # ExprPostInc
      | ID '--'                                        # ExprPostDec
      | expr op=('*' | '/' | '%') expr                 # ExprMulDivMod
@@ -209,8 +209,6 @@ CAST : 'cast' ; // function call keyword
 WORLD : 'world' ;
 QUEST : 'quest' ; // main block header
 ROLL : 'roll' ;
-KNOWN : 'known' ;
-UNSEEN : 'unseen' ;
 SUMMON : 'summon' ;
 NARRATE : 'narrate' ;
 RETURN : 'return' ;

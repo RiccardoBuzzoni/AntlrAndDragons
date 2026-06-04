@@ -3,6 +3,8 @@ package it.univr.lang;
 // Imports
 import it.univr.lang.type.*;
 import it.univr.lang.value.*;
+import org.antlr.v4.runtime.ParserRuleContext;
+
 import java.util.*;
 
 /**
@@ -187,7 +189,6 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
     @Override public Type visitClassField(BagOfGrammarParser.ClassFieldContext ctx) { return null; }
     @Override public Type visitClassMethodReturn(BagOfGrammarParser.ClassMethodReturnContext ctx) { return null; }
     @Override public Type visitClassMethodVoid(BagOfGrammarParser.ClassMethodVoidContext ctx) { return null; }
-    @Override public Type visitVisibility(BagOfGrammarParser.VisibilityContext ctx) { return null; }
 
     // Spellbook (functions)
     @Override
@@ -668,11 +669,35 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
     @Override public Type visitExprPostInc(BagOfGrammarParser.ExprPostIncContext ctx) { return checkIncDecExpr(ctx, ctx.ID().getText()); }
     @Override public Type visitExprPostDec(BagOfGrammarParser.ExprPostDecContext ctx) { return checkIncDecExpr(ctx, ctx.ID().getText()); }
 
-    private Type checkIncDecExpr(org.antlr.v4.runtime.ParserRuleContext ctx, String varName) {
+    private Type checkIncDecExpr(ParserRuleContext ctx, String varName) {
         Type t = lookup(varName, ctx);
         if (!isNumeric(t))
             error(ctx, "Increment/decrement requires numeric type, got " + t);
         return t;
+    }
+
+    @Override public Type visitExprPreIncField(BagOfGrammarParser.ExprPreIncFieldContext ctx) {
+        return checkIncDecField(ctx, ctx.ID(0).getText(), ctx.ID(1).getText());
+    }
+    @Override
+    public Type visitExprPreDecField(BagOfGrammarParser.ExprPreDecFieldContext ctx) {
+        return checkIncDecField(ctx, ctx.ID(0).getText(), ctx.ID(1).getText());
+    }
+    @Override
+    public Type visitExprPostIncField(BagOfGrammarParser.ExprPostIncFieldContext ctx) {
+        return checkIncDecField(ctx, ctx.ID(0).getText(), ctx.ID(1).getText());
+    }
+    @Override
+    public Type visitExprPostDecField(BagOfGrammarParser.ExprPostDecFieldContext ctx) {
+        return checkIncDecField(ctx, ctx.ID(0).getText(), ctx.ID(1).getText());
+    }
+
+    private Type checkIncDecField(ParserRuleContext ctx, String obj, String field) {
+        Type objType = lookup(obj, ctx);
+        Type fieldType = resolveField(objType, field, ctx);
+        if (!isNumeric(fieldType))
+            error(ctx, "Increment/decrement requires numeric type, got " + fieldType);
+        return fieldType;
     }
 
     // User input

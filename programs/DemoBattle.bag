@@ -14,14 +14,14 @@
 creatures:
 
     creature Hero{
-        known HP hp;
-        known Level level;
-        known Int strength_bonus;
-        known Int dexterity_bonus;
-        known Int proficiency_bonus;
-        known Int armour_class;
+        HP hp;
+        Level level;
+        Int strength_bonus;
+        Int dexterity_bonus;
+        Int proficiency_bonus;
+        Int armour_class;
 
-        known Damage longswordDamage(Bool is_critical, Int bonus){
+        Damage longswordDamage(Bool is_critical, Int bonus){
             narrate "The hero strikes the goblin warrior with his sword!";
             if(is_critical eq true){
                 return roll 2d8 + bonus;
@@ -31,7 +31,7 @@ creatures:
             }
         }
 
-        known Damage longbowDamage(Bool is_critical, Int bonus){
+        Damage longbowDamage(Bool is_critical, Int bonus){
             narrate "The hero hits the goblin warrior with his bow!";
             if(is_critical eq true){
                 return roll 2d8 + bonus;
@@ -41,20 +41,20 @@ creatures:
             }
         }
 
-        known HP healingPotion(){
+        HP healingPotion(){
             narrate "The hero drinks a small healing potion!";
             return roll 2d4 + 2;
         }
     }
 
     creature GoblinWarrior{
-        known HP hp;
-        known Int attack_bonus;
-        known Int damage_bonus;
-        known Int armour_class;
+        HP hp;
+        Int attack_bonus;
+        Int damage_bonus;
+        Int armour_class;
 
 
-        known Damage scimitarDamage(Bool is_critical, Int bonus){
+        Damage scimitarDamage(Bool is_critical, Int bonus){
             narrate "The goblin warrior strikes the hero with his scimitar!";
             if(is_critical eq true){
                 return roll 2d6 + bonus;

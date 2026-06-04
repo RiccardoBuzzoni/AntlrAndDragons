@@ -1,0 +1,153 @@
+// ==================================================
+//  ANTLR & DRAGONS — DemoForFireball.bag
+//  Second showcase of Antlr&Dragons functionalities
+//
+//  Features:
+//      - Ciclo for con break ed else
+//      - Incremento/decremento pre e post
+//      - Zucchero sintattico /=
+//      - Funzione fireball su più nemici
+//      - Cast esplicito (Damage)
+//      - Operatore ternario
+// ==================================================
+
+creatures:
+
+    creature Hero {
+        HP hp;
+        Level level;
+        Int spell_slots;
+        String name;
+    }
+
+    creature Goblin {
+        HP hp;
+        Int dex;
+        String name;
+    }
+
+spellbook:
+
+    // Fireball: area spell that hits three goblins.
+    // Goblins that succeed a Dexterity saving throw (DC 14) take half damage.
+    // Zucchero sintattico /= to halve damage on a successful save.
+    spell void fireball(Hero caster, Goblin g1, Goblin g2, Goblin g3) {
+
+        Damage totalDmg = roll 8d6;
+        narrate i"${caster.name} casts Fireball for ${totalDmg} fire damage!";
+
+        // Saving throw per ogni goblin (d20 + loro dex, CD 14)
+        Int save1 = roll d20 + g1.dex;
+        Int save2 = roll d20 + g2.dex;
+        Int save3 = roll d20 + g3.dex;
+
+        Damage dmg1 = totalDmg;
+        Damage dmg2 = totalDmg;
+        Damage dmg3 = totalDmg;
+
+        // --- ZUCCHERO SINTATTICO: /= ---
+        // Integer division floors automatically, just like D&D rules.
+        if (save1 gte 14) {
+            dmg1 /= 2;
+        }
+        if (save2 gte 14) {
+            dmg2 /= 2;
+        }
+        if (save3 gte 14) {
+            dmg3 /= 2;
+        }
+
+        g1.hp -= dmg1;
+        g2.hp -= dmg2;
+        g3.hp -= dmg3;
+
+        narrate i"${g1.name} takes ${dmg1} damage (save: ${save1}) – HP left: ${g1.hp}";
+        narrate i"${g2.name} takes ${dmg2} damage (save: ${save2}) – HP left: ${g2.hp}";
+        narrate i"${g3.name} takes ${dmg3} damage (save: ${save3}) – HP left: ${g3.hp}";
+
+        // Consume one spell slot
+        // --- DECREMENTO POST ---
+        caster.spell_slots--;
+        narrate i"Spell slots remaining: ${caster.spell_slots}";
+    }
+
+quest:
+{
+    Hero hero = summon Hero();
+    hero.hp = (HP) 40;
+    hero.level = (Level) 5;
+    hero.spell_slots = 2;
+    hero.name = "Elminster Aumar";
+
+    Goblin g1 = summon Goblin();
+    g1.hp = (HP) 180;
+    g1.dex = 1;
+    g1.name = "Gruk";
+
+    Goblin g2 = summon Goblin();
+    g2.hp = (HP) 180;
+    g2.dex = 3;
+    g2.name = "Skab";
+
+    Goblin g3 = summon Goblin();
+    g3.hp = (HP) 180;
+    g3.dex = 2;
+    g3.name = "Morg";
+
+    narrate "========================================";
+    narrate "        LET THE BATTLE BEGIN!           ";
+    narrate "========================================";
+    narrate "";
+
+    // -------------------------------------------------------
+    // FOR con BREAK ed ELSE
+    //
+    // The hero has a limited number of rounds (MAX_ROUNDS = 5)
+    // to kill all three goblins using Fireball.
+    // - break: exits early if all goblins are dead before time runs out.
+    // - else:  fires if the loop completes without a break
+    //          (the hero failed to kill them all in time).
+    // -------------------------------------------------------
+
+    narrate "The hero has 5 rounds to defeat all goblins with Fireball!";
+    narrate "";
+
+    for round from 1 to 5 {
+
+        narrate i"---------- Round ${round} ----------";
+
+        // --- INCREMENTO PRE: boost dex of g1 each round (gets harder to burn) ---
+        ++g1.dex;
+        narrate i"${g1.name} braces for impact! (dex: ${g1.dex})";
+
+        // Cast fireball if the hero still has spell slots
+        if (hero.spell_slots gt 0) {
+            cast fireball(hero, g1, g2, g3);
+        }
+        else {
+            narrate "No spell slots left!";
+        }
+
+        narrate "";
+
+        // Break early if all goblins are down
+        if ((g1.hp lte 0) and (g2.hp lte 0) and (g3.hp lte 0)) {
+            narrate "All goblins have fallen — victory before time ran out!";
+            break;
+        }
+    }
+    else {
+        // Fired only if the loop completed all 5 rounds without a break
+        narrate "========================================";
+        narrate " The goblins survived all 5 rounds...";
+        narrate " The hero has failed his quest!";
+        narrate "========================================";
+    }
+
+    narrate "";
+    narrate "===== Final Status =====";
+    narrate i"Hero HP: ${hero.hp}  |  Spell slots left: ${hero.spell_slots}";
+    narrate i"${g1.name} HP: ${g1.hp}";
+    narrate i"${g2.name} HP: ${g2.hp}";
+    narrate i"${g3.name} HP: ${g3.hp}";
+}
