@@ -80,17 +80,17 @@ quest:
     hero.name = "Elminster Aumar";
 
     Goblin g1 = summon Goblin();
-    g1.hp = (HP) 180;
+    g1.hp = (HP) 18;
     g1.dex = 1;
     g1.name = "Gruk";
 
     Goblin g2 = summon Goblin();
-    g2.hp = (HP) 180;
+    g2.hp = (HP) 18;
     g2.dex = 3;
     g2.name = "Skab";
 
     Goblin g3 = summon Goblin();
-    g3.hp = (HP) 180;
+    g3.hp = (HP) 18;
     g3.dex = 2;
     g3.name = "Morg";
 

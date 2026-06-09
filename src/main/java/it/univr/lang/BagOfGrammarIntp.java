@@ -483,9 +483,17 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     public ExpValue<?> visitExprRoll(BagOfGrammarParser.ExprRollContext ctx) {
         String text = ctx.DIE_LIT().getText(); // ex. "d6", "d20"
         int numDice = ctx.INT_LIT() != null ? Integer.parseInt(ctx.INT_LIT().getText()) : 1;
-        int sides = text.substring(1).equals("%") ? 100 : Integer.parseInt(text.substring(1));
         int total = 0;
-        for (int i = 0; i < numDice; i++) total += rng.nextInt(sides) + 1;
+        if (text.substring(1).equals("%")) { // d&
+            for (int i = 0; i < numDice; i++) {
+                total += (rng.nextInt(10) + 1) * 10; // [10 - 100]
+            }
+        } else{
+            int sides = Integer.parseInt(text.substring(1));
+            for (int i = 0; i < numDice; i++) {
+                total += rng.nextInt(sides) + 1;
+            }
+        }
         return new IntValue(total);
     }
 
@@ -548,12 +556,20 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
 
     // Logical
     @Override
-    public ExpValue<?> visitExprLogical(BagOfGrammarParser.ExprLogicalContext ctx) {
-        boolean left = visitBoolExpr(ctx.expr(0)).toJavaValue();
-        if (ctx.op.getText().equals("and") && !left) return new BoolValue(false);
-        if (ctx.op.getText().equals("or")  &&  left) return new BoolValue(true);
+    public ExpValue<?> visitExprLogicalAnd(BagOfGrammarParser.ExprLogicalAndContext ctx) {
+        boolean left = visitBoolExpr(ctx.expr(0)).toJavaValue(); // if left is false AND is false
+        if (!left) return new BoolValue(false);
+
         return visitExpr(ctx.expr(1));
     }
+    @Override
+    public ExpValue<?> visitExprLogicalOr(BagOfGrammarParser.ExprLogicalOrContext ctx) {
+        boolean left = visitBoolExpr(ctx.expr(0)).toJavaValue();
+        if (left) return new BoolValue(true); // if left is true OR is true
+
+        return visitExpr(ctx.expr(1));
+    }
+
     @Override
     public ExpValue<?> visitExprNot(BagOfGrammarParser.ExprNotContext ctx) {
         return new BoolValue(!visitBoolExpr(ctx.expr()).toJavaValue());
@@ -694,6 +710,17 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
             return new DecValue(Double.parseDouble(input));
         } else if (targetType == SimpleType.BOOL) {
             return new BoolValue(Boolean.parseBoolean(input));
+        } else if (targetType == SimpleType.ANY) {
+            // Try to parse as the most specific type possible
+            try {
+                return new IntValue(Integer.parseInt(input));
+            } catch (NumberFormatException ignored) {}
+            try {
+                return new DecValue(Double.parseDouble(input));
+            } catch (NumberFormatException ignored) {}
+            if (input.equalsIgnoreCase("true") || input.equalsIgnoreCase("false"))
+                return new BoolValue(Boolean.parseBoolean(input));
+            return new StringValue(input); // fallback
         } else {
             return new StringValue(input); // String, QuestName, Any
         }

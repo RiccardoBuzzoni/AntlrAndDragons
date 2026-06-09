@@ -62,6 +62,7 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
     private boolean isAssignable(Type from, Type to) {
         if (from instanceof ErrType || to instanceof ErrType) return true;
         if (to == SimpleType.ANY) return true;
+        if(from == SimpleType.ANY) return true;
         if (from.equals(to)) return true;
         if(to == SimpleType.INT &&
                 (from == SimpleType.HP || from == SimpleType.DAMAGE || from == SimpleType.LEVEL))
@@ -85,13 +86,13 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
     }
 
     private boolean isNumeric(Type t) {
-        if(t instanceof ErrType) return true;
+        if(t instanceof ErrType || t == SimpleType.ANY) return true;
         return t == SimpleType.INT || t == SimpleType.FLOAT ||
                 t == SimpleType.HP || t == SimpleType.DAMAGE || t == SimpleType.LEVEL;
     }
 
     private boolean isBool(Type t) {
-        return t instanceof ErrType || t == SimpleType.BOOL;
+        return t instanceof ErrType || t == SimpleType.BOOL || t == SimpleType.ANY;
     }
 
     private Type numericJoin(Type a, Type b) {
@@ -595,13 +596,23 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
 
     // Logical
     @Override
-    public Type visitExprLogical(BagOfGrammarParser.ExprLogicalContext ctx) {
+    public Type visitExprLogicalAnd(BagOfGrammarParser.ExprLogicalAndContext ctx) {
         Type left  = visit(ctx.expr(0));
         Type right = visit(ctx.expr(1));
         if (!isBool(left))
-            error(ctx, "'" + ctx.op.getText() + "' requires Bool left operand, got " + left);
+            error(ctx, "'and' requires Bool left operand, got " + left);
         if (!isBool(right))
-            error(ctx, "'" + ctx.op.getText() + "' requires Bool right operand, got " + right);
+            error(ctx, "'and' requires Bool right operand, got " + right);
+        return SimpleType.BOOL;
+    }
+    @Override
+    public Type visitExprLogicalOr(BagOfGrammarParser.ExprLogicalOrContext ctx) {
+        Type left  = visit(ctx.expr(0));
+        Type right = visit(ctx.expr(1));
+        if (!isBool(left))
+            error(ctx, "'or' requires Bool left operand, got " + left);
+        if (!isBool(right))
+            error(ctx, "'or' requires Bool right operand, got " + right);
         return SimpleType.BOOL;
     }
 

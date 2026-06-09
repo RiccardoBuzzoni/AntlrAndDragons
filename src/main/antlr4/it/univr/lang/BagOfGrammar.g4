@@ -159,8 +159,8 @@ expr : expr '.' spellCall                             # ExprMethodCall
      | expr op=('+' | '-') expr                       # ExprAddSub
      | expr op=('lt' | 'gt' | 'lte' | 'gte') expr     # ExprRelational
      | expr op=('eq' | 'neq') expr                    # ExprEquality
-     | expr op='and' expr                             # ExprLogical
-     | expr op='or' expr                              # ExprLogical
+     | expr op='and' expr                             # ExprLogicalAnd
+     | expr op='or' expr                              # ExprLogicalOr
      | <assoc=right> expr '?' expr ':' expr           # ExprTernary
      | SUMMON ID '(' ')'                              # ExprNew
      | spellCall                                      # ExprFuncCall
