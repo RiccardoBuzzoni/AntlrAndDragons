@@ -722,7 +722,7 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
                 return new BoolValue(Boolean.parseBoolean(input));
             return new StringValue(input); // fallback
         } else {
-            return new StringValue(input); // String, QuestName, Any
+            return new StringValue(input); // String, QuestName, Die
         }
     }
 }

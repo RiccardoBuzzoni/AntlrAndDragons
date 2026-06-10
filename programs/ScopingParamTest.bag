@@ -1,0 +1,59 @@
+creatures:
+
+    creature Hero{
+        HP hp;
+
+        void modifyObject(Hero hero){
+            hero.hp = 99;
+        }
+    }
+
+world:
+    Int x = 1;
+
+spellbook:
+
+    spell Int getX() {
+        return x;
+    }
+
+    spell void modifyPrimitive(Int n) {
+        n = 99;
+    }
+
+    spell void modifyObject(Hero h) {
+        h.hp = 99;
+    }
+
+quest:
+{
+    // --- TEST 1: dynamic scoping ---
+    narrate cast getX();
+
+    {
+        Int x = 2;
+        narrate cast getX();
+
+        {
+            Int x = 3;
+            narrate cast getX();
+        }
+
+        narrate cast getX();
+    }
+
+    narrate cast getX();
+
+    // --- TEST 2: pass-by-value ---
+    Int y = 10;
+    cast modifyPrimitive(y);
+    narrate y;
+
+    // --- TEST 3: pass-by-value on object ---
+    Hero h = summon Hero();
+    h.hp = 50;
+    narrate h.hp;
+    cast modifyObject(h);
+    narrate h.hp;
+
+}

@@ -49,7 +49,7 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
         scopes.peek().vars.put(name, type);
     }
 
-    private Type lookup(String name, org.antlr.v4.runtime.ParserRuleContext ctx) {
+    private Type lookup(String name, ParserRuleContext ctx) {
         for (Scope s : scopes)
             if (s.vars.containsKey(name)) {
                 return s.vars.get(name);
