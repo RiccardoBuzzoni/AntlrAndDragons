@@ -12,12 +12,18 @@
 
 ## 1. Introduzione
 
+**AntlrAndDragons** è un linguaggio di programmazione imperativo tipizzato sviluppato tramite ANTLR4 come DSL (*Domain Specific Language*) ispirato alle meccaniche dei giochi di ruolo fantasy, in particolare Dungeons & Dragons (DnD).
+
 ### Struttura del progetto
 
 ```
 AntlrAndDragons/
 ├── .idea/                      # File di configurazione dell'IDE IntelliJ
-├── gen/                        # Codice generato automaticamente (es. da ANTLR)
+├── programs/                   # Demo e programmi di test
+│   ├── DemoBattle.bag
+│   ├── DemoErrors.bag
+│   ├── ScopingParamTest.bag
+│   └── TimeLimit.bag
 ├── src/                        # Codice sorgente del progetto
 │   └── main/
 │       ├── antlr4/             # Cartella contenente le grammatiche ANTLR
@@ -25,7 +31,7 @@ AntlrAndDragons/
 │       │       └── BagOfGrammar.g4  # File della grammatica ANTLR4
 │       └── java/               # Codice sorgente Java
 │           └── it.univr.lang/  # Package principale Java
-│               ├── errors/     # Sotto-package per la gestione degli errori
+│               ├── errors/     # Sotto-package per la gestione degli errori a runtime
 │               │   └── RuntimeError
 │               ├── type/       # Sotto-package per il sistema dei tipi
 │               │   ├── ComType
@@ -50,8 +56,6 @@ AntlrAndDragons/
 └── pom.xml                     # File di configurazione di Maven (dipendenze e build)
 ```
 
-**AntlrAndDragons** è un linguaggio di programmazione imperativo tipizzato sviluppato tramite ANTLR4 come DSL (*Domain Specific Language*) ispirato alle meccaniche dei giochi di ruolo fantasy, in particolare Dungeons & Dragons (DnD).
-
 ## 2. Scelte progettuali
 
 Il linguaggio è stato progettato come DSL (Domain Specific Language) con l'obiettivo di fornire costrutti espressivi e tematicamente coerenti con il dominio RPG, mantenendo allo stesso tempo caratteristiche tipiche dei linguaggi di programmazione moderni:
@@ -63,7 +67,7 @@ Il linguaggio è stato progettato come DSL (Domain Specific Language) con l'obie
 - **Conversioni di tipo**, sia implicite per tipi compatibili nella gerarchia, sia esplicite tramite cast;
 - **Zucchero sintattico**: assegnamenti composti (`+=`, `-=`, `*=`, `/=`), incremento e decremento unitario (`++`, `--`) con precedenza pre e post, operatore ternario (`_ ? _ : _`), e interpolazione di espressioni nelle stringhe (`i"...${expr}..."`);
 - **Gestione strutturata delle sezioni del programma**, con sezioni distinte per creature, globali, funzioni e blocco principale.
-- **Input da Utente**: permette la massima libertà di scelta e infinite possibilità di gioco.
+- **Input da Utente**, tramite `declare(Type,prompt)`, con validazione di tipo a runtime.
 
 L'interprete è stato implementato con ANTLR4 su IntelliJ IDEA, sfruttando parser e visitor generati automaticamente dalla grammatica.
 
@@ -335,15 +339,15 @@ declare(Tipo, "messaggio prompt")
 Mostra il prompt all'utente, attende un input da tastiera e lo converte nel tipo specificato. È necessario indicare esplicitamente il tipo atteso:
 
 ```
-Int eta = declare(Int, "Quanti anni hai?");
-Any nome = declare(Any, "Come ti chiami?");
 Any x = declare(Int, "Scegli un numero:");
 Int x = declare(Any, "Scegli un numero:");
 ```
 
-I tipi `HP`, `Damage` e `Level` vengono trattati come `Int` durante la lettura.
+Entrambi gli esempi proposti sono validi, Any rappresenta il root-type del linguaggio ed essendo compatibile con tutti gli altri tipi
+subisce un casting implicito al tipo definito per la variabile. Analogamente, un tipo Int potrà sempre essere assegnato ad una variabile
+di tipo Any. I tipi `HP`, `Damage` e `Level` vengono trattati come `Int` durante la lettura.
 
-Limiti:
+#### Limiti:
 * Per riconoscere il tipo senza doverlo dedurre dal contesto, abbiamo imposto la necessità di specificare il tipo di dato nel costrutto declare.
 * Dopo la dichiarazione del tipo, sono necessarie la virgola e le doppie apici, anche vuote all'interno.
 
@@ -884,7 +888,11 @@ Tutte e tre disabilitano il fill dello stack trace (`super(null, null, true, fal
 
 ### Branching — `newBranch()`
 
-Una delle scelte architetturali più importanti dell'interprete è il meccanismo di **branching**, usato ogni volta che si entra in un blocco condizionale o in un ciclo. L'idea di base è: anziché eseguire il blocco direttamente sulla memoria corrente, si crea una copia isolata dell'interprete — un *branch* — che lavora su una copia della memoria. Al termine, le modifiche vengono riportate sulla memoria principale tramite `mergeFrom()`.
+Una delle scelte architetturali più importanti dell'interprete è il meccanismo di **branching**. Quando si esegue un
+blocco condizionale o un ciclo, le variabili dichiarate localmente non devono uscire dall'ambiente locale e al contempo
+le modifiche a variabili già esistenti devono propagarsi. Grazie a questo meccanismo, l'interprete crea una copia isolata
+della memoria attraverso la funzione `copyFrom()`, detta **branch**. Quando il blocco termina, solo le modifiche a variabili preesistenti vengono riportate
+sulla memoria principale tramite la funzione `mergeFrom()`.
 
 ```java
 private BagOfGrammarIntp newBranch() {
@@ -1001,7 +1009,7 @@ Le creature vengono registrate in `registerCreatures` che distingue tra **field*
 
 ---
 
-### 6.8 Gestione degli errori
+### 6.6 Gestione degli errori
 
 Il linguaggio distingue due categorie di errori, rilevati in fasi distinte dell'esecuzione: gli **errori statici**, individuati dal type checker prima dell'esecuzione, e gli **errori dinamici**, individuati dall'interprete a runtime.
  
