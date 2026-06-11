@@ -113,8 +113,16 @@ Per compilare ed eseguire il linguaggio sono necessari:
 ### Generazione del parser e compilazione
 
 Installare Maven su Windows:
+
+1) Installare scoop
 ```bash
-winget install Apache.Maven
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+```
+
+2) Installare Maven:
+```bash
+scoop install maven
 ```
 
 Installare Maven su Mac:
