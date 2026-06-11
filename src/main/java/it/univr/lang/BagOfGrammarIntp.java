@@ -1,6 +1,7 @@
 package it.univr.lang;
 
 // Imports
+import it.univr.lang.errors.RuntimeError;
 import it.univr.lang.type.*;
 import it.univr.lang.value.*;
 import org.antlr.v4.runtime.*;
@@ -200,7 +201,9 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
 
     @Override
     public ExpValue<?> visitAssignField(BagOfGrammarParser.AssignFieldContext ctx){
-        ObjectValue obj = (ObjectValue) mem.getValue(ctx.ID(0).getText());
+        ExpValue<?> val = mem.getValue(ctx.ID(0).getText());
+        if (!(val instanceof ObjectValue obj))
+            throw new RuntimeError("'" + ctx.ID(0).getText() + "' is not a creature instance", ctx.start.getLine());
         obj.setField(ctx.ID(1).getText(), visitExpr(ctx.expr()));
         return null;
     }
@@ -249,7 +252,9 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     }
 
     private ExpValue<?> applyCompoundField(String objName, String fieldName, ExpValue<?> rhs, String op) {
-        ObjectValue obj = (ObjectValue) mem.getValue(objName);
+        ExpValue<?> val = mem.getValue(objName);
+        if (!(val instanceof ObjectValue obj))
+            throw new RuntimeError("'" + objName + "' is not a creature instance");
         ExpValue<?> current = obj.getField(fieldName);
         obj.setField(fieldName, applyArith(current, rhs, op));
         return null;
@@ -355,7 +360,7 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
         String name = ctx.ID().getText();
         BagOfGrammarParser.SpellDeclContext decl = spells.get(name);
         if (decl == null)
-            throw new RuntimeException("Unknown spell: " + name);
+            throw new RuntimeError("Unknown spell: " + name + "'", ctx.start.getLine());
 
         List<ExpValue<?>> args = evalArgs(ctx.argList());
 
@@ -388,7 +393,7 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
         String methodName = callCtx.ID().getText();
         CreatureDescriptor desc = creatures.get(className);
         if (desc == null || !desc.methods.containsKey(methodName))
-            throw new RuntimeException("Unknown method '" + methodName + "' on " + className);
+            throw new RuntimeError("Unknown method '" + methodName + "' on " + className + "'", callCtx.start.getLine());
 
         BagOfGrammarParser.CreatureMemberContext m = desc.methods.get(methodName);
         List<ExpValue<?>> args = evalArgs(callCtx.argList());
@@ -505,7 +510,7 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     public ExpValue<?> visitExprNew(BagOfGrammarParser.ExprNewContext ctx) {
         String className = ctx.ID().getText();
         CreatureDescriptor desc = creatures.get(className);
-        if (desc == null) throw new RuntimeException("Unknown creature: " + className);
+        if (desc == null) throw new RuntimeError("Unknown creature: " + className + "'", ctx.start.getLine());
         ObjectValue obj = new ObjectValue(className);
         for (Map.Entry<String, ExpType> e : desc.fields.entrySet())
             obj.setField(e.getKey(), defaultValue(e.getValue()));
@@ -515,10 +520,16 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
         return visit(ctx.spellCall());
     }
     @Override public ExpValue<?> visitExprMethodCall(BagOfGrammarParser.ExprMethodCallContext ctx) {
-        return callMethod((ObjectValue) visitExpr(ctx.expr()), ctx.spellCall());
+        ExpValue<?> val = visitExpr(ctx.expr());
+        if (!(val instanceof ObjectValue obj))
+            throw new RuntimeError("Cannot call a spell on a non-creature value", ctx.start.getLine());
+        return callMethod(obj, ctx.spellCall());
     }
     @Override public ExpValue<?> visitExprFieldAccess(BagOfGrammarParser.ExprFieldAccessContext ctx) {
-        return ((ObjectValue) visitExpr(ctx.expr())).getField(ctx.ID().getText());
+        ExpValue<?> val = visitExpr(ctx.expr());
+        if (!(val instanceof ObjectValue obj))
+            throw new RuntimeError("Cannot access field '" + ctx.ID().getText() + "' on a non-creature value", ctx.start.getLine());
+        return obj.getField(ctx.ID().getText());
     }
 
     // Arithmetic
@@ -532,7 +543,18 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     }
     @Override
     public ExpValue<?> visitExprMulDivMod(BagOfGrammarParser.ExprMulDivModContext ctx) {
-        return applyArith(visitExpr(ctx.expr(0)), visitExpr(ctx.expr(1)), ctx.op.getText());
+        ExpValue<?> left = visit(ctx.expr(0));
+        ExpValue<?> right = visit(ctx.expr(1));
+        String op = ctx.op.getText();
+
+        if ("/".equals(op) || "%".equals(op)) {
+            Object javaValue = right.toJavaValue();
+
+            if (javaValue instanceof Number && ((Number) javaValue).doubleValue() == 0.0) {
+                throw new RuntimeError("Can't divide by 0!", ctx.start.getLine());
+            }
+        }
+        return applyArith(left, right, op);
     }
     @Override
     public ExpValue<?> visitExprNeg(BagOfGrammarParser.ExprNegContext ctx) {
@@ -541,6 +563,20 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     }
 
     private ExpValue<?> applyArith(ExpValue<?> left, ExpValue<?> right, String op) {
+        boolean bothInt = (left instanceof IntValue) && (right instanceof IntValue);
+        if (bothInt) {
+            int l = ((IntValue) left).toJavaValue();
+            int r = ((IntValue) right).toJavaValue();
+            int result = switch (op) {
+                case "+" -> l + r;
+                case "-" -> l - r;
+                case "*" -> l * r;
+                case "/" -> l / r;
+                case "%" -> l % r;
+                default  -> throw new RuntimeError("Unknown operator: '" + op + "'");
+            };
+            return new IntValue(result);
+        }
         double l = toDouble(left), r = toDouble(right);
         double result = switch (op) {
             case "+" -> l + r;
@@ -548,10 +584,9 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
             case "*" -> l * r;
             case "/" -> l / r;
             case "%" -> l % r;
-            default  -> throw new RuntimeException("Unknown operator: " + op);
+            default  -> throw new RuntimeError("Unknown operator: '" + op + "'");
         };
-        boolean bothInt = (left instanceof IntValue) && (right instanceof IntValue);
-        return bothInt ? new IntValue((int) result) : new DecValue(result);
+        return new DecValue(result);
     }
 
     // Logical
@@ -585,7 +620,7 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
             case "gt"  -> left >  right;
             case "lte" -> left <= right;
             case "gte" -> left >= right;
-            default    -> throw new RuntimeException("Unknown relational op: " + ctx.op.getText());
+            default    -> throw new RuntimeError("Unknown relational op: " + ctx.op.getText() + "'", ctx.start.getLine());
         });
     }
 
@@ -647,7 +682,9 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     }
 
     private ExpValue<?> incDecField(String objName, String fieldName, int delta, boolean pre) {
-        ObjectValue obj = (ObjectValue) mem.getValue(objName);
+        ExpValue<?> val = mem.getValue(objName);
+        if (!(val instanceof ObjectValue obj))
+            throw new RuntimeError("'" + objName + "' is not a creature instance");
         ExpValue<?> old = obj.getField(fieldName);
         ExpValue<?> updated = old instanceof IntValue i
                 ? new IntValue(i.toJavaValue() + delta)
@@ -696,7 +733,7 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     @Override
     public ExpValue<?> visitExprDeclare(BagOfGrammarParser.ExprDeclareContext ctx) {
         String prompt = visitStringExpr(ctx.expr()).toJavaValue();
-        System.out.println(prompt); // use print not println!
+        System.out.print(prompt); // use print not println!
         System.out.flush(); // empties output buffer
 
         java.util.Scanner scanner = new java.util.Scanner(System.in);
@@ -705,9 +742,17 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
         ExpType targetType = resolveType(ctx.type());
         if (targetType == SimpleType.INT || targetType == SimpleType.HP
                 || targetType == SimpleType.DAMAGE || targetType == SimpleType.LEVEL) {
-            return new IntValue(Integer.parseInt(input));
+            try {
+                return new IntValue(Integer.parseInt(input));
+            } catch (NumberFormatException e) {
+                throw new RuntimeError("Expected an integer value, got: '" + input + "'", ctx.start.getLine());
+            }
         } else if (targetType == SimpleType.FLOAT) {
-            return new DecValue(Double.parseDouble(input));
+            try {
+                return new DecValue(Double.parseDouble(input));
+            } catch (NumberFormatException e) {
+                throw new RuntimeError("Expected a decimal value, got: '" + input + "'", ctx.start.getLine());
+            }
         } else if (targetType == SimpleType.BOOL) {
             return new BoolValue(Boolean.parseBoolean(input));
         } else if (targetType == SimpleType.ANY) {

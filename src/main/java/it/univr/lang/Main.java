@@ -41,7 +41,18 @@ public class Main {
         }
 
         // Interpretation
-        BagOfGrammarIntp interpreter = new BagOfGrammarIntp();
-        interpreter.visit(tree);
+        try {
+            BagOfGrammarIntp interpreter = new BagOfGrammarIntp();
+            interpreter.visit(tree);
+        } catch (it.univr.lang.errors.RuntimeError e) {
+            // Intercept error
+            System.err.println(e.toString());
+            // Error status code
+            System.exit(1);
+        } catch (Exception e) {
+            System.err.println("Internal Interpreter Error:");
+            e.printStackTrace();
+            System.exit(1);
+        }
     }
 }

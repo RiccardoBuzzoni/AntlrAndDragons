@@ -10,7 +10,6 @@ package it.univr.lang.errors;
  */
 
 public class RuntimeError extends RuntimeException{
-
     private final int line;
 
     public RuntimeError(String msg, int line){
@@ -29,11 +28,9 @@ public class RuntimeError extends RuntimeException{
 
     @Override
     public String toString() {
-        if(line >= 0){
+        if(line >= 0)
             return "[Runtime Error] line " + line + ": " + getMessage();
-        }
-        else{
+        else
             return "[Runtime Error] " + getMessage();
-        }
     }
 }

@@ -1,0 +1,71 @@
+// ==================================================
+//  ANTLR & DRAGONS — DemoErrors.bag
+//  Runtime Error showcase for Antlr&Dragons
+//
+//  Features demonstrated:
+//      - Division by zero
+//      - Invalid user input (non-integer for Int type)
+//      - Field access on a non-object value
+// ==================================================
+
+creatures:
+
+    creature Warrior {
+        HP hp;
+        Damage atk;
+        String name;
+    }
+
+spellbook:
+
+    spell void demo_div_zero() {
+        narrate "-- Scenario: A warrior tries to split the loot among 0 companions. --";
+        Int loot   = 500;
+        Int allies = 0;
+        Int share  = loot / allies;
+        narrate i"Each companion gets ${share} gold.";
+    }
+
+    spell void demo_bad_input() {
+        narrate "-- Scenario: The dungeon master asks for the number of players. --";
+        narrate "  (Tip: type something that is NOT a number, e.g. 'pippo')";
+        Int players = declare(Int, "How many players are there?");
+        narrate i"Party size: ${players}";
+    }
+
+    spell void demo_field_on_nonobject() {
+        narrate "-- Scenario: A scribe tries to read the name of a plain number. --";
+        Int treasure = 42;
+        narrate i"Treasure name: ${treasure.name}";
+    }
+
+
+quest:
+{
+    narrate "========================================";
+    narrate "   ANTLR & DRAGONS — Runtime Errors    ";
+    narrate "========================================";
+    narrate "";
+    narrate "Choose a scenario to witness a runtime error:";
+    narrate "  1. Division by zero";
+    narrate "  2. Invalid user input";
+    narrate "  3. Field access on a non-object";
+    narrate "";
+
+    Int choice = declare(Int, "Choose a number between [1-3]");
+
+    narrate "";
+
+    if (choice eq 1) {
+        cast demo_div_zero();
+    }
+    else if (choice eq 2) {
+        cast demo_bad_input();
+    }
+    else if (choice eq 3) {
+        cast demo_field_on_nonobject();
+    }
+    else {
+        narrate "Unknown scenario. Choose a number between 1 and 3.";
+    }
+}
