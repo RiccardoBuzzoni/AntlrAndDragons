@@ -4,7 +4,7 @@ creatures:
         HP hp;
 
         void modifyObject(Hero hero){
-            hero.hp = 99;
+            hero.hp = (HP) 99;
         }
     }
 
@@ -22,7 +22,7 @@ spellbook:
     }
 
     spell void modifyObject(Hero h) {
-        h.hp = 99;
+        h.hp = (HP) 99;
     }
 
 quest:
@@ -51,7 +51,8 @@ quest:
 
     // --- TEST 3: pass-by-value on object ---
     Hero h = summon Hero();
-    h.hp = 50;
+    h.hp = (HP) 50;
+    Int hp_value = h.hp; // implicit casting HP -> Int
     narrate h.hp;
     cast modifyObject(h);
     narrate h.hp;

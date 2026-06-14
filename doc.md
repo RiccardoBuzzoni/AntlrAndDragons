@@ -233,8 +233,9 @@ Possono:
 | `Die`       | Tipo dedicato ai dadi RPG, sottotipo di `String`  |
 | `Any`       | Supertipo universale                              |
 
-I tipi `HP`,`Damage` e `Level` sono tipi di dominio che estendono `Int`, mentre `QuestName` e `Die` sono tipi di dominio che estende `String`. I tipi `HP`,`Damage` e `Level` sono compatibili nelle espressioni aritmetiche con `Int` e tra loro (con conversione implicita a `Int`). I tipi `QuestName` e `Die` sono compatibili nelle espressioni aritmetiche con `String` (con conversione implicita a `String`).
-
+I tipi HP, Damage e Level sono sottotipi semantici di Int: il widening `(HP → Int, Int → Float)` avviene implicitamente, 
+mentre il narrowing `(Int → HP)` richiede un cast esplicito. Analogamente, QuestName e Die sono sottotipi di String: 
+l'assegnazione `QuestName → String` è implicita, `String → QuestName` richiede cast esplicito.
 
 ### 4.5 Zucchero Sintattico 
 
@@ -252,7 +253,7 @@ Sono supportati operatori composti:
 Mage.hp=20;
 atk = goblin.cast ClawAttack(); //(type Damage)
 
-Mage.hp -= atk; //conversione implicita
+Mage.hp -= (HP) atk; 
 ```
 
 ### Incremento e decremento
@@ -338,9 +339,12 @@ declare(Tipo, "messaggio prompt")
 
 Mostra il prompt all'utente, attende un input da tastiera e lo converte nel tipo specificato. È necessario indicare esplicitamente il tipo atteso:
 
+Any è il supertipo universale: qualsiasi valore può essere assegnato a una variabile Any implicitamente. L'assegnazione 
+inversa (Any a un tipo concreto) richiede invece un cast esplicito. Ad esempio:
 ```
-Any x = declare(Int, "Scegli un numero:");
-Int x = declare(Any, "Scegli un numero:");
+Any x = declare(Any, "Inserisci un numero:"); // OK: tipo Any
+Int x = declare(Any, "Inserisci un numero:"); // NON OK! 
+Int x = (Int) declare(Any, "Inserisci un numero:"); // OK: cast esplicito Any -> Int
 ```
 
 Entrambi gli esempi proposti sono validi, Any rappresenta il root-type del linguaggio ed essendo compatibile con tutti gli altri tipi
@@ -788,7 +792,8 @@ $$
 Una variabile può ricevere:
 
 * valori dello stesso tipo;
-* valori di sottotipi compatibili o valori convertibili implicitamente;
+* valori di sottotipi (widening implicito: es. HP → Int, Int → Float). Il narrowing (es. Int → HP, Float → Int) 
+richiede un cast esplicito.
 
 Esempio:
 
@@ -808,20 +813,36 @@ private boolean isAssignable(Type from, Type to) {
     if (from instanceof ErrType || to instanceof ErrType) return true;
     if (to == SimpleType.ANY) return true;
     if (from.equals(to)) return true;
-    if (to == SimpleType.INT &&
-            (from == SimpleType.HP || from == SimpleType.DAMAGE || from == SimpleType.LEVEL))
-        return true;
-    // ...
+
+    // Subtyping: HP, Damage, Level subtypes of Int
+    if ((from == SimpleType.HP || from == SimpleType.DAMAGE || from == SimpleType.LEVEL)
+            && to == SimpleType.INT) return true;
+
+    // Subtyping: QuestName, Die subtypes of String
+    if ((from == SimpleType.QUESTNAME || from == SimpleType.DIE)
+            && to == SimpleType.STRING) return true;
+
+    // Numeric widening
+    if ((from == SimpleType.INT || from == SimpleType.HP ||
+            from == SimpleType.DAMAGE || from == SimpleType.LEVEL)
+            && to == SimpleType.FLOAT) return true;
+
+    if (from instanceof ObjectType && to instanceof ObjectType)
+        return ((ObjectType) from).getName().equals(((ObjectType) to).getName());
+
+    return false;
 }
 ```
-
-Il metodo restituisce `true` nei seguenti casi: se uno dei due tipi è `ErrType` (errore già segnalato in precedenza, si evita il cascading di errori); se il tipo destinazione è `Any` (accetta qualsiasi valore); se i tipi sono identici; se `from` è un sottotipo di `to` secondo la gerarchia definita (ad esempio `HP → Int`, `Die → String`, `Int → Float`). Il metodo è usato pervasivamente nel type checker — nelle dichiarazioni di variabile, negli assegnamenti, nei ritorni di funzione e nei controlli sugli argomenti — garantendo che le regole di compatibilità siano applicate in modo uniforme in tutto il sistema.
 
 ###  Conversione di tipo
 
 #### Cast esplicito
 
-Nonostante siano state implementate conversioni implicite tra tipi compatibili, per estendere le funzionalità della grammatica, sono ammesse anche conversioni esplicite.
+Il linguaggio distingue due categorie di conversione di tipo. Il widening implicito avviene automaticamente quando si 
+assegna un sottotipo al suo supertipo (es. HP → Int, Int → Float, QuestName → String). Il narrowing esplicito 
+richiede un cast nella forma (Tipo) espressione ed è obbligatorio quando si converte un supertipo in un 
+sottotipo (es. Int → HP, Float → Int, String → QuestName). Un cast esplicito errato (es. (Int) "ciao") produce 
+un errore a runtime.
 
 ```text
 (Float) x
@@ -1077,11 +1098,11 @@ try {
 
 Gli errori dinamici rilevati includono:
 
-| Scenario | Messaggio |
-|---|---|
-| Divisione per zero | `Can't divide by 0!` |
-| Input utente non convertibile al tipo atteso | `Expected an integer value, got: 'pippo'` |
-| Accesso a un campo su un valore non-oggetto | `Cannot access field 'name' on a non-creature value` |
+| Scenario | Messaggio                                                                          |
+|---|------------------------------------------------------------------------------------|
+| Divisione per zero | `Can't divide by 0!`                                                               |
+| Input utente non convertibile al tipo atteso | `Expected an integer value, got: 'pippo'`                                          |
+| Accesso a un campo su un valore non-oggetto | `Cannot access field 'name' on a non-creature value (inside string interpolation)` |
 
 Nell'interprete sono gestiti altri tipi di errore, tuttavia questi errori vengono catturati prima dal type checker.
 Questi controlli sono presenti nell'interprete come rete di sicurezza difensiva, nel caso in cui l'interprete venga utilizzato in futuro senza passare per il type checker.
@@ -1130,7 +1151,7 @@ La distinzione tra le due categorie di errore rispecchia una separazione precisa
 //      - Funzioni
 //      - Flusso di controllo condizionato (switch)
 //      - Zucchero sintattico
-//      - Cast (implicito ed esplicito)
+//      - Cast esplicito
 // ==================================================
 
 // Class definition
@@ -1147,26 +1168,26 @@ creatures:
         Damage longswordDamage(Bool is_critical, Int bonus){
             narrate "The hero strikes the goblin warrior with his sword!";
             if(is_critical eq true){
-                return roll 2d8 + bonus;
+                return (Damage) (roll 2d8 + bonus);
             }
             else{
-                return roll d8 + bonus;
+                return (Damage) (roll d8 + bonus);
             }
         }
 
         Damage longbowDamage(Bool is_critical, Int bonus){
             narrate "The hero hits the goblin warrior with his bow!";
             if(is_critical eq true){
-                return roll 2d8 + bonus;
+                return (Damage) (roll 2d8 + bonus);
             }
             else{
-                return roll d8 + bonus;
+                return (Damage) (roll d8 + bonus);
             }
         }
 
         HP healingPotion(){
             narrate "The hero drinks a small healing potion!";
-            return roll 2d4 + 2;
+            return (HP) (roll 2d4 + 2);
         }
     }
 
@@ -1180,10 +1201,10 @@ creatures:
         Damage scimitarDamage(Bool is_critical, Int bonus){
             narrate "The goblin warrior strikes the hero with his scimitar!";
             if(is_critical eq true){
-                return roll 2d6 + bonus;
+                return (Damage) (roll 2d6 + bonus);
             }
             else{
-                return roll d6 + bonus;
+                return (Damage) (roll d6 + bonus);
             }
         }
 
@@ -1202,7 +1223,7 @@ spellbook:
 // Main
 quest:
 {
-    QuestName mission = "Slay the goblin warrior!";
+    QuestName mission = (QuestName) "Slay the goblin warrior!";
     String mission_name = mission; // non-numeric type chain
     narrate "====================";
     narrate mission_name;
@@ -1218,7 +1239,7 @@ quest:
     hero.proficiency_bonus = 2;
     hero.armour_class = 17;
 
-    goblin_warrior.hp = 25; // implicit casting
+    goblin_warrior.hp = (HP) 25;
     goblin_warrior.attack_bonus = 4;
     goblin_warrior.damage_bonus = 2;
     goblin_warrior.armour_class = 15;
@@ -1239,7 +1260,7 @@ quest:
         narrate "  4 -> Flee";
         narrate "";
 
-        Damage damage = 0;
+        Damage damage = (Damage) 0;
         Bool valid_action = false;
         Bool is_critical = false;
 
@@ -1299,7 +1320,7 @@ quest:
                     HP heal = hero.cast healingPotion();
                     if(hero.hp + heal gte 40){
                         narrate "The hero is fully healed!";
-                        hero.hp = 40;
+                        hero.hp = (HP) 40;
                     }
                     else{
                         narrate i"The hero is healed for ${heal} hit points!";
@@ -1374,7 +1395,7 @@ quest:
 //      - Incremento/decremento pre e post
 //      - Zucchero sintattico /=
 //      - Funzione fireball su più nemici
-//      - Cast esplicito (Damage)
+//      - Cast esplicito (HP, Level)
 //      - Operatore ternario
 // ==================================================
 
@@ -1400,7 +1421,7 @@ spellbook:
     // Zucchero sintattico /= to halve damage on a successful save.
     spell void fireball(Hero caster, Goblin g1, Goblin g2, Goblin g3) {
 
-        Damage totalDmg = roll 8d6;
+        Damage totalDmg = (Damage) roll 8d6;
         narrate i"${caster.name} casts Fireball for ${totalDmg} fire damage!";
 
         // Saving throw per ogni goblin (d20 + loro dex, CD 14)
@@ -1531,7 +1552,7 @@ creatures:
         HP hp;
 
         void modifyObject(Hero hero){
-            hero.hp = 99;
+            hero.hp = (HP) 99;
         }
     }
 
@@ -1549,7 +1570,7 @@ spellbook:
     }
 
     spell void modifyObject(Hero h) {
-        h.hp = 99;
+        h.hp = (HP) 99;
     }
 
 quest:
@@ -1578,7 +1599,8 @@ quest:
 
     // --- TEST 3: pass-by-value on object ---
     Hero h = summon Hero();
-    h.hp = 50;
+    h.hp = (HP) 50;
+    Int hp_value = h.hp; // implicit casting HP -> Int
     narrate h.hp;
     cast modifyObject(h);
     narrate h.hp;
@@ -1599,14 +1621,6 @@ Output: `1 2 3 2 1 10 50 99 `
 //      - Invalid user input (non-integer for Int type)
 //      - Field access on a non-object value
 // ==================================================
-
-creatures:
-
-    creature Warrior {
-        HP hp;
-        Damage atk;
-        String name;
-    }
 
 spellbook:
 
@@ -1661,5 +1675,108 @@ quest:
         narrate "Unknown scenario. Choose a number between 1 and 3.";
     }
 }
+```
 
+### `DemoCast.bag`
+
+```
+// ==================================================
+//  ANTLR & DRAGONS — DemoCast.bag
+//  Showcase of implicit and explicit casting rules
+//
+//  Menu options:
+//      1. Implicit widening: HP -> Int
+//      2. Implicit widening: QuestName -> String
+//      3. Implicit widening: Int -> Float
+//      4. Explicit narrowing: Int -> HP
+//      5. Explicit narrowing: String -> QuestName
+//      6. Explicit narrowing: Float -> Int (truncation)
+//      7. Runtime cast failure: (Int) on non-numeric input
+//      8. Exit
+// ==================================================
+
+quest:
+{
+    narrate "========================================";
+    narrate "   ANTLR & DRAGONS — Cast Showcase     ";
+    narrate "========================================";
+    narrate "";
+
+    Bool running = true;
+
+    until(running eq false){
+        narrate "Select a scenario:";
+        narrate "  1. Implicit widening: HP -> Int";
+        narrate "  2. Implicit widening: QuestName -> String";
+        narrate "  3. Implicit widening: Int -> Float";
+        narrate "  4. Explicit narrowing: Int -> HP";
+        narrate "  5. Explicit narrowing: String -> QuestName";
+        narrate "  6. Explicit narrowing: Float -> Int (truncation)";
+        narrate "  7. Runtime cast failure: (Int) on non-numeric input";
+        narrate "  8. Exit";
+        narrate "";
+
+        Int choice = declare(Int, "Choose an option [1-8]: ");
+        narrate "";
+
+        switch(choice){
+            case 1:
+                // HP is a subtype of Int — widening is implicit
+                HP hero_hp = (HP) 42;
+                Int hp_as_int = hero_hp;
+                narrate i"HP value:       ${hero_hp}";
+                narrate i"As Int (impl.): ${hp_as_int}";
+                break;
+            case 2:
+                // QuestName is a subtype of String — widening is implicit
+                QuestName quest_name = (QuestName) "Defeat the Dragon";
+                String name_as_string = quest_name;
+                narrate i"QuestName value:      ${quest_name}";
+                narrate i"As String (impl.):    ${name_as_string}";
+                break;
+            case 3:
+                // Int widens to Float implicitly
+                Int gold = 7;
+                Float gold_ratio = gold;
+                narrate i"Int value:        ${gold}";
+                narrate i"As Float (impl.): ${gold_ratio}";
+                break;
+            case 4:
+                // Int -> HP requires explicit cast (narrowing)
+                Int raw_hp = 100;
+                HP explicit_hp = (HP) raw_hp;
+                narrate i"Int value:          ${raw_hp}";
+                narrate i"As HP (explicit):   ${explicit_hp}";
+                break;
+            case 5:
+                // String -> QuestName requires explicit cast (narrowing)
+                String raw_name = "Slay the Lich King";
+                QuestName explicit_quest = (QuestName) raw_name;
+                narrate i"String value:             ${raw_name}";
+                narrate i"As QuestName (explicit):  ${explicit_quest}";
+                break;
+            case 6:
+                // Float -> Int requires explicit cast — decimal part is truncated
+                Float pi = 3.14;
+                Int truncated = (Int) pi;
+                narrate i"Float value:        ${pi}";
+                narrate i"As Int (explicit):  ${truncated}  <- decimal part truncated";
+                break;
+            case 7:
+                // declare(Any) accepts any input — casting to Int fails at runtime
+                // if the user types a non-numeric value (e.g. 'ciao')
+                narrate "Type something that is NOT a number (e.g. 'ciao'):";
+                Any raw_input = declare(Any, "> ");
+                Int parsed = (Int) raw_input;
+                narrate i"Parsed as Int: ${parsed}";
+                break;
+            case 8:
+                flee;
+            default:
+                narrate "Invalid choice. Please select a number between 1 and 8.";
+        }
+
+        narrate "";
+    }
+}
 ```

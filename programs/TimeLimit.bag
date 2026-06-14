@@ -7,7 +7,7 @@
 //      - Incremento/decremento pre e post
 //      - Zucchero sintattico /=
 //      - Funzione fireball su più nemici
-//      - Cast esplicito (Damage)
+//      - Cast esplicito (HP, Level)
 //      - Operatore ternario
 // ==================================================
 
@@ -33,7 +33,7 @@ spellbook:
     // Zucchero sintattico /= to halve damage on a successful save.
     spell void fireball(Hero caster, Goblin g1, Goblin g2, Goblin g3) {
 
-        Damage totalDmg = roll 8d6;
+        Damage totalDmg = (Damage) roll 8d6;
         narrate i"${caster.name} casts Fireball for ${totalDmg} fire damage!";
 
         // Saving throw per ogni goblin (d20 + loro dex, CD 14)

@@ -1,0 +1,99 @@
+// ==================================================
+//  ANTLR & DRAGONS — DemoCast.bag
+//  Showcase of implicit and explicit casting rules
+//
+//  Menu options:
+//      1. Implicit widening: HP -> Int
+//      2. Implicit widening: QuestName -> String
+//      3. Implicit widening: Int -> Float
+//      4. Explicit narrowing: Int -> HP
+//      5. Explicit narrowing: String -> QuestName
+//      6. Explicit narrowing: Float -> Int (truncation)
+//      7. Runtime cast failure: (Int) on non-numeric input
+//      8. Exit
+// ==================================================
+
+quest:
+{
+    narrate "========================================";
+    narrate "   ANTLR & DRAGONS — Cast Showcase     ";
+    narrate "========================================";
+    narrate "";
+
+    Bool running = true;
+
+    until(running eq false){
+        narrate "Select a scenario:";
+        narrate "  1. Implicit widening: HP -> Int";
+        narrate "  2. Implicit widening: QuestName -> String";
+        narrate "  3. Implicit widening: Int -> Float";
+        narrate "  4. Explicit narrowing: Int -> HP";
+        narrate "  5. Explicit narrowing: String -> QuestName";
+        narrate "  6. Explicit narrowing: Float -> Int (truncation)";
+        narrate "  7. Runtime cast failure: (Int) on non-numeric input";
+        narrate "  8. Exit";
+        narrate "";
+
+        Int choice = declare(Int, "Choose an option [1-8]: ");
+        narrate "";
+
+        switch(choice){
+            case 1:
+                // HP is a subtype of Int — widening is implicit
+                HP hero_hp = (HP) 42;
+                Int hp_as_int = hero_hp;
+                narrate i"HP value:       ${hero_hp}";
+                narrate i"As Int (impl.): ${hp_as_int}";
+                break;
+            case 2:
+                // QuestName is a subtype of String — widening is implicit
+                QuestName quest_name = (QuestName) "Defeat the Dragon";
+                String name_as_string = quest_name;
+                narrate i"QuestName value:      ${quest_name}";
+                narrate i"As String (impl.):    ${name_as_string}";
+                break;
+            case 3:
+                // Int widens to Float implicitly
+                Int gold = 7;
+                Float gold_ratio = gold;
+                narrate i"Int value:        ${gold}";
+                narrate i"As Float (impl.): ${gold_ratio}";
+                break;
+            case 4:
+                // Int -> HP requires explicit cast (narrowing)
+                Int raw_hp = 100;
+                HP explicit_hp = (HP) raw_hp;
+                narrate i"Int value:          ${raw_hp}";
+                narrate i"As HP (explicit):   ${explicit_hp}";
+                break;
+            case 5:
+                // String -> QuestName requires explicit cast (narrowing)
+                String raw_name = "Slay the Lich King";
+                QuestName explicit_quest = (QuestName) raw_name;
+                narrate i"String value:             ${raw_name}";
+                narrate i"As QuestName (explicit):  ${explicit_quest}";
+                break;
+            case 6:
+                // Float -> Int requires explicit cast — decimal part is truncated
+                Float pi = 3.14;
+                Int truncated = (Int) pi;
+                narrate i"Float value:        ${pi}";
+                narrate i"As Int (explicit):  ${truncated}  <- decimal part truncated";
+                break;
+            case 7:
+                // declare(Any) accepts any input — casting to Int fails at runtime
+                // if the user types a non-numeric value (e.g. 'ciao')
+                narrate "Type something that is NOT a number (e.g. 'ciao'):";
+                Any raw_input = declare(Any, "> ");
+                Int parsed = (Int) raw_input;
+                narrate i"Parsed as Int: ${parsed}";
+                break;
+            case 8:
+                flee;
+            default:
+                narrate "Invalid choice. Please select a number between 1 and 8.";
+        }
+
+        narrate "";
+    }
+}

@@ -8,14 +8,6 @@
 //      - Field access on a non-object value
 // ==================================================
 
-creatures:
-
-    creature Warrior {
-        HP hp;
-        Damage atk;
-        String name;
-    }
-
 spellbook:
 
     spell void demo_div_zero() {

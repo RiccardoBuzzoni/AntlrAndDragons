@@ -171,7 +171,7 @@ expr : expr '.' spellCall                             # ExprMethodCall
      | STRING_LIT                                     # ExprString
      | INT_LIT? DIE_LIT                               # ExprDie
      | INTERP_STRING                                  # ExprInterpString
-     | DECLARE '(' type ',' expr ')'                  # ExprDeclare
+     | DECLARE '(' type (',' expr)? ')'               # ExprDeclare
      | '(' expr ')'                                   # ExprParen
      ;
 

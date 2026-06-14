@@ -182,7 +182,9 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     // Variable declaration
     @Override
     public ExpValue<?> visitVarDeclInit(BagOfGrammarParser.VarDeclInitContext ctx) {
-        mem.declareInit(ctx.ID().getText(), resolveType(ctx.type()), visitExpr(ctx.expr()));
+        ExpType declaredType = resolveType(ctx.type());
+        ExpValue<?> value = TypeUtils.castValue(visitExpr(ctx.expr()), declaredType);
+        mem.declareInit(ctx.ID().getText(), declaredType, value);
         return null;
     }
 
@@ -528,7 +530,7 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     @Override public ExpValue<?> visitExprFieldAccess(BagOfGrammarParser.ExprFieldAccessContext ctx) {
         ExpValue<?> val = visitExpr(ctx.expr());
         if (!(val instanceof ObjectValue obj))
-            throw new RuntimeError("Cannot access field '" + ctx.ID().getText() + "' on a non-creature value", ctx.start.getLine());
+            throw new RuntimeError("Cannot access field '" + ctx.ID().getText() + "' on a non-creature value (inside string interpolation)", ctx.start.getLine());
         return obj.getField(ctx.ID().getText());
     }
 
@@ -732,7 +734,11 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
     // User input
     @Override
     public ExpValue<?> visitExprDeclare(BagOfGrammarParser.ExprDeclareContext ctx) {
-        String prompt = visitStringExpr(ctx.expr()).toJavaValue();
+        String prompt = "";
+
+        if(ctx.expr() != null)
+            prompt = visitStringExpr(ctx.expr()).toJavaValue();
+
         System.out.print(prompt); // use print not println!
         System.out.flush(); // empties output buffer
 

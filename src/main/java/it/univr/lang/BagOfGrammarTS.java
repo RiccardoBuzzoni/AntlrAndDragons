@@ -62,26 +62,46 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
     private boolean isAssignable(Type from, Type to) {
         if (from instanceof ErrType || to instanceof ErrType) return true;
         if (to == SimpleType.ANY) return true;
-        if(from == SimpleType.ANY) return true;
         if (from.equals(to)) return true;
-        if(to == SimpleType.INT &&
-                (from == SimpleType.HP || from == SimpleType.DAMAGE || from == SimpleType.LEVEL))
-            return true; // subtypes of Integer
-        if (from == SimpleType.INT &&
-                (to == SimpleType.HP || to == SimpleType.DAMAGE || to == SimpleType.LEVEL)) {
-            return true; // coercion
-        }
-        if (to == SimpleType.STRING && (from == SimpleType.QUESTNAME || from == SimpleType.DIE))
-            return true; // subtypes of String
-        if (from == SimpleType.STRING && (to == SimpleType.QUESTNAME || to == SimpleType.DIE)) {
-            return true; // coercion
-        }
-        if (to == SimpleType.FLOAT &&
-                (from == SimpleType.INT || from == SimpleType.HP ||
-                        from == SimpleType.DAMAGE || from == SimpleType.LEVEL))
-            return true; // numeric -> Float
+
+        // Subtyping: HP, Damage, Level subtypes of Int
+        if ((from == SimpleType.HP || from == SimpleType.DAMAGE || from == SimpleType.LEVEL)
+                && to == SimpleType.INT) return true;
+
+        // Subtyping: QuestName, Die subtypes of String
+        if ((from == SimpleType.QUESTNAME || from == SimpleType.DIE)
+                && to == SimpleType.STRING) return true;
+
+        // Numeric widening
+        if ((from == SimpleType.INT || from == SimpleType.HP ||
+                from == SimpleType.DAMAGE || from == SimpleType.LEVEL)
+                && to == SimpleType.FLOAT) return true;
+
         if (from instanceof ObjectType && to instanceof ObjectType)
-            return ((ObjectType) from).getName().equals(((ObjectType) to).getName()); // Object type by class name
+            return ((ObjectType) from).getName().equals(((ObjectType) to).getName());
+
+        return false;
+    }
+
+    private boolean isCastable(Type from, Type to) {
+        if (isAssignable(from, to)) return true;
+
+        // Narrowing: Int -> HP, Damage, Level
+        if (from == SimpleType.INT &&
+                (to == SimpleType.HP || to == SimpleType.DAMAGE || to == SimpleType.LEVEL))
+            return true;
+
+        // Narrowing: String -> QuestName, Die
+        if (from == SimpleType.STRING &&
+                (to == SimpleType.QUESTNAME || to == SimpleType.DIE))
+            return true;
+
+        // Narrowing numerico: Float -> Int
+        if (from == SimpleType.FLOAT && to == SimpleType.INT) return true;
+
+        // Any -> any type
+        if (from == SimpleType.ANY) return true;
+
         return false;
     }
 
@@ -664,13 +684,11 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
     public Type visitExprCast(BagOfGrammarParser.ExprCastContext ctx) {
         Type targetType = visitType(ctx.type());
         Type exprType = visit(ctx.expr());
-        boolean toNum = isNumeric(targetType);
-        boolean fromNum = isNumeric(exprType);
-        boolean toStr = targetType == SimpleType.STRING;
-        // Allowed: numeric→numeric, numeric→String (to-string cast)
+
         if (!(exprType instanceof ErrType) && !(targetType instanceof ErrType)
-                && !((toNum && fromNum) || (toStr && fromNum)))
+                && !isCastable(exprType, targetType))
             error(ctx, "Invalid cast from " + exprType + " to " + targetType);
+
         return targetType;
     }
 
@@ -714,10 +732,13 @@ public class BagOfGrammarTS extends BagOfGrammarBaseVisitor<Type>{
     // User input
     @Override
     public Type visitExprDeclare(BagOfGrammarParser.ExprDeclareContext ctx) {
-        Type promptType = visit(ctx.expr());
-        if (promptType != SimpleType.STRING && promptType != SimpleType.ANY
-                && !(promptType instanceof ErrType)) {
-            error(ctx, "'declare' prompt must be a String, got " + promptType);
+        if(ctx.expr() != null) {
+            Type promptType = visit(ctx.expr());
+
+            if (promptType != SimpleType.STRING && promptType != SimpleType.ANY
+                    && !(promptType instanceof ErrType)) {
+                error(ctx, "'declare' prompt must be a String, got " + promptType);
+            }
         }
         return visitType(ctx.type()); // returns declared type
     }

@@ -1,6 +1,7 @@
 package it.univr.lang.type;
 
 // Imports
+import it.univr.lang.errors.RuntimeError;
 import it.univr.lang.value.*;
 
 public class TypeUtils {
@@ -39,6 +40,9 @@ public class TypeUtils {
             }
             return SimpleType.STRING;
         }
+        if (value instanceof ObjectValue obj) {
+            return new ObjectType(obj.getClassName());
+        }
         return null;
     }
 
@@ -46,7 +50,15 @@ public class TypeUtils {
     public static ExpValue<?> castValue(ExpValue<?> value, ExpType targetType){
         ExpType valueType = fromValue(value);
 
-        if(valueType == SimpleType.INT && targetType == SimpleType.FLOAT){
+        if (targetType == SimpleType.ANY) return value;
+
+        if (valueType instanceof ObjectType && targetType instanceof ObjectType) {
+            if (((ObjectType) valueType).getName().equals(((ObjectType) targetType).getName()))
+                return value;
+            throw new RuntimeError("Runtime cast error: cannot cast " + valueType + " to " + targetType);
+        }
+
+        if (valueType == SimpleType.INT && targetType == SimpleType.FLOAT) {
             IntValue intValue = (IntValue) value;
             return new DecValue((double) intValue.toJavaValue());
         }
@@ -56,17 +68,26 @@ public class TypeUtils {
             return new IntValue((int) decValue.toJavaValue().doubleValue());
         }
 
-        if(valueType == SimpleType.INT &&
-                (targetType == SimpleType.INT || targetType == SimpleType.HP || targetType == SimpleType.DAMAGE ||
-                        targetType == SimpleType.LEVEL)){
-            return value; // no need to cast value to Java value
-        }
-
-        if ((valueType == SimpleType.STRING || valueType == SimpleType.DIE || valueType == SimpleType.QUESTNAME) &&
-                (targetType == SimpleType.STRING || targetType == SimpleType.QUESTNAME || targetType == SimpleType.DIE)) {
+        if (valueType == SimpleType.INT &&
+                (targetType == SimpleType.INT || targetType == SimpleType.HP ||
+                        targetType == SimpleType.DAMAGE || targetType == SimpleType.LEVEL)) {
             return value;
         }
 
-        return value; // default
+        if ((valueType == SimpleType.STRING || valueType == SimpleType.DIE || valueType == SimpleType.QUESTNAME) &&
+                (targetType == SimpleType.STRING || targetType == SimpleType.QUESTNAME ||
+                        targetType == SimpleType.DIE)) {
+            return value;
+        }
+
+        // Widening
+        if ((valueType == SimpleType.HP || valueType == SimpleType.DAMAGE || valueType == SimpleType.LEVEL)
+                && targetType == SimpleType.INT) {
+            return value;
+        }
+
+        if (valueType.equals(targetType)) return value;
+
+        throw new RuntimeError("Runtime cast error: cannot cast " + valueType + " to " + targetType);
     }
 }
