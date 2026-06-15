@@ -815,22 +815,22 @@ Any
 Le conversioni numeriche seguono le catene:
 
 $$
-    \text{HP} \subsetneq \text{Int} \subsetneq \text{Float} \\
+    \text{HP} \subsetneq \text{Int} \subsetneq \text{Any} \\
 $$
 $$
-    \text{Damage} \subsetneq \text{Int} \subsetneq \text{Float} \\
+    \text{Damage} \subsetneq \text{Int} \subsetneq \text{Any} \\
 $$
 $$
-    \text{Level} \subsetneq \text{Int} \subsetneq \text{Float} \\
+    \text{Level} \subsetneq \text{Int} \subsetneq \text{Any} \\
 $$
 
 Le conversioni non numeriche seguono le catene:
 
 $$
-    \text{QuestName} \subsetneq \text{String} \\
+    \text{QuestName} \subsetneq \text{String} \subsetneq \text{Any} \\ 
 $$
 $$
-    \text{Die} \subsetneq \text{String} \\
+    \text{Die} \subsetneq \text{String} \subsetneq \text{Any} \\
 $$
 
 
