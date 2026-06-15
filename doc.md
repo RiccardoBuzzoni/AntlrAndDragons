@@ -21,6 +21,7 @@ AntlrAndDragons/
 ├── .idea/                      # File di configurazione dell'IDE IntelliJ
 ├── programs/                   # Demo e programmi di test
 │   ├── DemoBattle.bag
+│   ├── DemoCast.bag
 │   ├── DemoErrors.bag
 │   ├── ScopingParamTest.bag
 │   └── TimeLimit.bag
@@ -161,6 +162,12 @@ Questo comando:
 
 ```bash
 java -jar target/antlrandragons.jar programs/<file.bag>
+```
+
+Esempio:
+
+```bash
+java -jar target/antlrandragons.jar programs/DemoBattle.bag
 ```
 
 ## 4. Sintassi
