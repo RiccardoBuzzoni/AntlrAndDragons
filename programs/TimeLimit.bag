@@ -8,7 +8,6 @@
 //      - Zucchero sintattico /=
 //      - Funzione fireball su più nemici
 //      - Cast esplicito (HP, Level)
-//      - Operatore ternario
 // ==================================================
 
 creatures:

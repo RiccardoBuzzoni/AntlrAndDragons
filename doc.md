@@ -32,22 +32,22 @@ AntlrAndDragons/
 │       └── java/               # Codice sorgente Java
 │           └── it.univr.lang/  # Package principale Java
 │               ├── errors/     # Sotto-package per la gestione degli errori a runtime
-│               │   └── RuntimeError
+│               │   └── RuntimeError.java
 │               ├── type/       # Sotto-package per il sistema dei tipi
-│               │   ├── ComType
-│               │   ├── ErrType
-│               │   ├── ExpType
-│               │   ├── FuncType
-│               │   ├── ObjectType
-│               │   ├── SimpleType
-│               │   ├── Type
-│               │   ├── TypeUtils
-│               │   └── VoidType
+│               │   ├── ComType.java
+│               │   ├── ErrType.java
+│               │   ├── ExpType.java
+│               │   ├── FuncType.java
+│               │   ├── ObjectType.java
+│               │   ├── SimpleType.java
+│               │   ├── Type.java
+│               │   ├── TypeUtils.java
+│               │   └── VoidType.java
 │               ├── value/      # Sotto-package per la gestione dei valori
-│               ├── BagOfGrammarIntp  # Interprete della grammatica (visitor principale)
-│               ├── BagOfGrammarTS    # Controllo dei tipi (Type System/Type Checker) (visitor secondario)
-│               ├── Main              # Punto di ingresso dell'applicazione
-│               └── Mem               # Gestione della memoria/scope
+│               ├── BagOfGrammarIntp.java  # Interprete della grammatica (visitor principale)
+│               ├── BagOfGrammarTS.java    # Controllo dei tipi (Type System/Type Checker) (visitor secondario)
+│               ├── Main.java              # Punto di ingresso dell'applicazione
+│               └── Mem.java               # Gestione della memoria/scope
 ├── target/                     # File compilati e build artifacts (generati da Maven)
 ├── .gitattributes              # Configurazione degli attributi Git
 ├── .gitignore                  # File per ignorare file/cartelle nel controllo versione
@@ -239,13 +239,15 @@ l'assegnazione `QuestName → String` è implicita, `String → QuestName` richi
 
 ### 4.5 Zucchero Sintattico 
 
-Sono supportati operatori composti:
+Sono supportati operatori composti, operatore ternatio e stringe interpolate:
 
 * `+=`
 * `-=`
 * `*=`
 * `/=`
 * `%=`
+* `String status = (hp gt 0) ? "Alive" : "Dead";`
+* `narrate i"Il risultato di x * y è ${x * y}";`
 
 ### Assegnamento composto
 
@@ -272,18 +274,21 @@ x--;
 
 La nostra gerarchia è coerente con i linguaggi tradizionali.
 
-| Precedenza (dalla più alta alla più bassa) | Operatori                                                                |
-| ------------------------------------------ | ------------------------------------------------------------------------ |
-| 1                                          | `.` (accesso a campi e chiamata a metodi)                                |
-| 2                                          | Operatori unari: `not`, `-`, cast `(Type)`, `++`, `--`, `roll`, `summon` |
-| 3                                          | `*`, `/`, `%`                                                            |
-| 4                                          | `+`, `-`                                                                 |
-| 5                                          | `lt`, `gt`, `lte`, `gte`                                                 |
-| 6                                          | `eq`, `neq`                                                              |
-| 7                                          | `and`                                                                    |
-| 8                                          | `or`                                                                     |
-| 9                                          | `?:` (operatore ternario, **associativo a destra**)                      |
-| 10                                         | Espressioni primarie                                                     |
+| Precedenza (dalla più alta alla più bassa) | Operatori                                                      |
+|--------------------------------------------|----------------------------------------------------------------|
+| 1                                          | Espressioni primarie: letterali, identificatori, summon, declare, (expr), chiamate a funzione|
+| 2                                          | `.` (accesso a campi e chiamata a metodi)                      |
+| 3                                          | Operatori unari: `not`, `-`, cast `(Type)`, `++`, `--`, `roll` |
+| 4                                          | `*`, `/`, `%`                                                  |
+| 5                                          | `+`, `-`                                                       |
+| 6                                          | `lt`, `gt`, `lte`, `gte`                                       |
+| 7                                          | `eq`, `neq`                                                    |
+| 8                                          | `and`                                                          |
+| 9                                          | `or`                                                           |
+| 10                                          | `?:` (operatore ternario, **associativo a destra**)            |
+
+Le espressioni primarie (summon, letterali, identificatori, declare, (expr)) sono alternative non ricorsive e vengono 
+sempre risolte per prime, indipendentemente dalla loro posizione nella grammatica.
 
 ---
 
@@ -347,13 +352,8 @@ Int x = declare(Any, "Inserisci un numero:"); // NON OK!
 Int x = (Int) declare(Any, "Inserisci un numero:"); // OK: cast esplicito Any -> Int
 ```
 
-Entrambi gli esempi proposti sono validi, Any rappresenta il root-type del linguaggio ed essendo compatibile con tutti gli altri tipi
-subisce un casting implicito al tipo definito per la variabile. Analogamente, un tipo Int potrà sempre essere assegnato ad una variabile
-di tipo Any. I tipi `HP`, `Damage` e `Level` vengono trattati come `Int` durante la lettura.
-
 #### Limiti:
 * Per riconoscere il tipo senza doverlo dedurre dal contesto, abbiamo imposto la necessità di specificare il tipo di dato nel costrutto declare.
-* Dopo la dichiarazione del tipo, sono necessarie la virgola e le doppie apici, anche vuote all'interno.
 
 ---
 
@@ -525,6 +525,21 @@ Nel For-Break: Con scoping dinamico, ogni blocco pusha un nuovo frame sulla pila
 
 Uso la notazione $\sigma_x = \{x \mapsto n_1\}$ per il frame contenente solo `x`, e la pila diventa $\sigma_x \cdot \overline{\sigma}$ all'ingresso del blocco, e torna $\overline{\sigma}$ all'uscita.
 
+$$
+\text{For-Step} ~ \frac{
+    (\overline{\sigma},\ e_1) \rightarrow n_1
+    \quad
+    (\overline{\sigma},\ e_2) \rightarrow n_2
+    \quad
+    n_1 \leq n_2
+    \quad
+    (\{x \mapsto n_1\} \cdot \overline{\sigma},\ c) \rightarrow \overline{\sigma}'
+    \quad
+    (\overline{\sigma}',\ \texttt{for}\ x\ \texttt{from}\ (n_1{+}1)\ \texttt{to}\ e_2\ \{c\}) \rightarrow \overline{\sigma}''
+}{
+    (\overline{\sigma},\ \texttt{for}\ x\ \texttt{from}\ e_1\ \texttt{to}\ e_2\ \{c\}) \rightarrow \overline{\sigma}''
+}
+$$
 
 $$
 \text{For-Done} ~ \frac{
@@ -694,18 +709,20 @@ Questo comportamento è identico a quello di Java.
 
 ```
 creatures:
-    creature Goblin { HP vita; }
+    creature Goblin { 
+        HP vita; 
+    }
 
 spellbook:
     spell void cura(Goblin g) {
-        g.vita += 20;           // modifica visibile al chiamante
+        g.vita += (HP) 20;           // modifica visibile al chiamante
         g = summon Goblin();    // riassegnazione locale: ignorata dal chiamante
     }
 
 quest:
 {
     Goblin nemico = summon Goblin();
-    nemico.vita = 30;
+    nemico.vita = (HP) 30;
     cast cura(nemico);
     narrate nemico.vita;   // stampa 50, non 30
 }
@@ -856,7 +873,7 @@ La grammatica:
 ```
 ---
 
-### 6.7 L'interprete (`BagOfGrammarIntp`)
+### 6.6 L'interprete (`BagOfGrammarIntp`)
 
 L'interprete è implementato come un **tree-walking interpreter**: visita direttamente l'AST(Abstract Syntax Tree) prodotto da ANTLR4 senza nessuna fase intermedia di compilazione o generazione di bytecode. Estende `BagOfGrammarBaseVisitor<ExpValue<?>>`, dove ogni metodo `visit*` corrisponde a una regola della grammatica e restituisce un `ExpValue<?>` — il supertipo di tutti i valori del linguaggio (`IntValue`, `DecValue`, `BoolValue`, `StringValue`, `ObjectValue`).
 
@@ -1030,7 +1047,7 @@ Le creature vengono registrate in `registerCreatures` che distingue tra **field*
 
 ---
 
-### 6.6 Gestione degli errori
+### 6.7 Gestione degli errori
 
 Il linguaggio distingue due categorie di errori, rilevati in fasi distinte dell'esecuzione: gli **errori statici**, individuati dal type checker prima dell'esecuzione, e gli **errori dinamici**, individuati dall'interprete a runtime.
  
