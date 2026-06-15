@@ -1,5 +1,11 @@
 # AntlrAndDragons
 
+Riccardo Buzzoni - VR5033332
+
+Alberto Pettene - VR500992
+
+Sofia De Togni - VR501921
+
 ## Indice
 
 1. [Introduzione](#1-introduzione)
@@ -130,7 +136,14 @@ Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 scoop install maven
 ```
 
-Installare Maven su Mac:
+Installare Maven su MacOS:
+
+1) Installare brew:
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+2) Installare Maven:
 ```bash
 brew install maven
 ```
@@ -519,6 +532,17 @@ $$
     (\overline{\sigma},\ \overline{s}_d) \rightarrow \overline{\sigma}'
 }{
     (\overline{\sigma},\ \texttt{switch}\ (e)\ \{\texttt{case}\ e_1: \overline{s}_1,\ \ldots,\ \texttt{case}\ e_n: \overline{s}_n,\ \texttt{default}: \overline{s}_d\}) \rightarrow \overline{\sigma}'
+}
+$$
+
+$$
+\text{Switch-NoMatch} ~ \frac{
+    (\overline{\sigma},\ e) \rightarrow v
+    \quad
+    \forall i.\ (\overline{\sigma},\ e_i) \rightarrow v_i \land v_i \neq v
+    \quad
+}{
+    (\overline{\sigma},\ \texttt{switch}\ (e)\ \{\texttt{case}\ e_1: \overline{s}_1,\ \ldots,\ \texttt{case}\ e_n: \overline{s}_n\}) \rightarrow \overline{\sigma}
 }
 $$
 
