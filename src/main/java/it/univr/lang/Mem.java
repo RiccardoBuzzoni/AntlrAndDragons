@@ -147,7 +147,7 @@ public class Mem {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         int depth = scopes.size();
-        List<Scope> ordered = new ArrayList<>(); // print from outermost to innermost
+        List<Scope> ordered = new ArrayList<>(scopes); // print from outermost to innermost
         Collections.reverse(ordered);
         for(Scope s : ordered){
             sb.append(" [scope ").append(depth--).append("] {");

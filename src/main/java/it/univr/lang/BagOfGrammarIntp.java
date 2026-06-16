@@ -506,7 +506,11 @@ public class BagOfGrammarIntp extends BagOfGrammarBaseVisitor<ExpValue<?>>{
 
     @Override
     public ExpValue<?> visitExprId(BagOfGrammarParser.ExprIdContext ctx) {
-        return mem.getValue(ctx.ID().getText());
+        String id = ctx.ID().getText();
+        ExpValue<?> val = mem.getValue(id);
+        if (val == null)
+            throw new RuntimeError("Undefined variable: '" + id + "'", ctx.start.getLine());
+        return val;
     }
     @Override
     public ExpValue<?> visitExprNew(BagOfGrammarParser.ExprNewContext ctx) {

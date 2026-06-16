@@ -41,7 +41,6 @@ AntlrAndDragons/
 │               ├── errors/     # Sotto-package per la gestione degli errori a runtime
 │               │   └── RuntimeError.java
 │               ├── type/       # Sotto-package per il sistema dei tipi
-│               │   ├── ComType.java
 │               │   ├── ErrType.java
 │               │   ├── ExpType.java
 │               │   ├── FuncType.java
@@ -51,6 +50,14 @@ AntlrAndDragons/
 │               │   ├── TypeUtils.java
 │               │   └── VoidType.java
 │               ├── value/      # Sotto-package per la gestione dei valori
+│               │   ├── BoolValue.java
+│               │   ├── DecValue.java
+│               │   ├── ExpValue.java
+│               │   ├── IntValue.java
+│               │   ├── NumValue.java
+│               │   ├── ObjectValue.java
+│               │   ├── StringValue.java
+│               │   └── Value.java
 │               ├── BagOfGrammarIntp.java  # Interprete della grammatica (visitor principale)
 │               ├── BagOfGrammarTS.java    # Controllo dei tipi (Type System/Type Checker) (visitor secondario)
 │               ├── Main.java              # Punto di ingresso dell'applicazione
@@ -163,7 +170,7 @@ java -version
 Il progetto usa Maven, che gestisce automaticamente la generazione del parser dalla grammatica e la compilazione:
 
 ```bash
-mvn package
+mvn clean package
 ```
 Questo comando:
 * Invoca il plugin ANTLR4 che genera lexer, parser e visitor da BagOfGrammar.g4
@@ -373,7 +380,11 @@ Int x = (Int) declare(Any, "Inserisci un numero:"); // OK: cast esplicito Any ->
 ```
 
 #### Limiti:
-* Per riconoscere il tipo senza doverlo dedurre dal contesto, abbiamo imposto la necessità di specificare il tipo di dato nel costrutto declare.
+* La sintassi `declare(Type, "prompt opzionale")` richiede che il tipo atteso venga dichiarato esplicitamente 
+all'interno della chiamata. Questa scelta progettuale consente al type checker di inferire staticamente il 
+tipo restituito dall'espressione, permettendo di verificare la compatibilità con la variabile a cui viene 
+assegnato il valore già in fase di analisi statica. In assenza del tipo, il type checker sarebbe costretto a 
+restituire `Any`, indebolendo le garanzie statiche del sistema dei tipi.
 
 ---
 
@@ -762,7 +773,11 @@ quest:
 
 ### 6.5 Il type checker (`BagOfGrammarTS`)
 
-Il type checker è implementato come secondo visitor (`BagOfGrammarBaseVisitor<ExpType>`). Viene eseguito **prima** dell'interprete e verifica la correttezza dei tipi in modo statico, usando una struttura `Mem` analoga ma che lavora con i tipi invece che con i valori.
+Analogamente all'interprete, il type checker estende (`BagOfGrammarBaseVisitor<Type>`), adottando un tipo di ritorno 
+uniforme per tutti i nodi dell'AST: i visitor delle espressioni restituiscono il Type inferito, mentre i visitor dei 
+comandi restituiscono null, utilizzato convenzionalmente come valore sentinella per indicare l'assenza di un tipo, 
+in analogia al tipo void del linguaggio C. Viene eseguito **prima** dell'interprete e verifica la correttezza dei 
+tipi in modo statico, usando una struttura `Mem` analoga ma che lavora con i tipi invece che con i valori.
 
 Le verifiche principali includono:
 
@@ -906,7 +921,10 @@ La grammatica:
 
 ### 6.6 L'interprete (`BagOfGrammarIntp`)
 
-L'interprete è implementato come un **tree-walking interpreter**: visita direttamente l'AST(Abstract Syntax Tree) prodotto da ANTLR4 senza nessuna fase intermedia di compilazione o generazione di bytecode. Estende `BagOfGrammarBaseVisitor<ExpValue<?>>`, dove ogni metodo `visit*` corrisponde a una regola della grammatica e restituisce un `ExpValue<?>` — il supertipo di tutti i valori del linguaggio (`IntValue`, `DecValue`, `BoolValue`, `StringValue`, `ObjectValue`).
+Il visitor dell'interprete estende BagOfGrammarBaseVisitor<ExpValue<?>>), adottando un tipo di ritorno uniforme 
+per tutti i nodi dell'AST (Abstract Syntax Tree): i visitor delle espressioni restituiscono un ExpValue<?> concreto, mentre i visitor dei 
+comandi restituiscono `null`, utilizzato convenzionalmente come valore sentinella per indicare l'assenza di un 
+risultato, in analogia al tipo void del linguaggio C.
 
 ### Memoria e scoping dinamico
 
