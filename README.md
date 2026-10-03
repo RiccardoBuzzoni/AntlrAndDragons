@@ -1846,3 +1846,7 @@ quest:
     }
 }
 ```
+
+## License
+
+MIT
